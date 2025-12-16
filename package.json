@@ -1,0 +1,66 @@
+{
+  "name": "wilsonplus",
+  "version": "1.0.0",
+  "description": "Building Materials & Paints Inventory Management Desktop Application",
+  "main": "main.js",
+  "homepage": "./",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "build-win": "electron-builder --win",
+    "build-win-portable": "electron-builder --win portable",
+    "dist": "npm run build",
+    "pack": "electron-builder --dir",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "keywords": ["building-materials", "paints", "inventory", "construction", "offline", "desktop", "stock-management", "electron"],
+  "author": "WilsonPlus Team",
+  "license": "MIT",
+  "build": {
+    "appId": "com.wilsonplus.inventory",
+    "productName": "WilsonPlus",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!dist/**/*",
+      "!*.md",
+      "!start.bat",
+      "!start.sh"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WilsonPlus"
+    },
+    "portable": {
+      "artifactName": "WilsonPlus-Portable.exe"
+    }
+  },
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "dependencies": {
+    "sql.js": "^1.10.3"
+  }
+}
