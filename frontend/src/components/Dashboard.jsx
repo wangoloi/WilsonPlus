@@ -123,11 +123,11 @@ const Dashboard = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="p-6 transition-shadow bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Items</p>
+              <p className="mb-1 text-sm text-gray-600">Total Items</p>
               <h3 className="text-2xl font-bold text-gray-900">{stats.totalItems}</h3>
             </div>
             <div className="bg-[#1b65f6]/10 p-3 rounded-lg">
@@ -136,41 +136,41 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+        <div className="p-6 transition-shadow bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Low Stock</p>
+              <p className="mb-1 text-sm text-gray-600">Low Stock</p>
               <h3 className="text-2xl font-bold text-gray-900">{stats.lowStockItems}</h3>
             </div>
-            <div className="bg-red-100 p-3 rounded-lg">
+            <div className="p-3 bg-red-100 rounded-lg">
               <AlertTriangle className="w-6 h-6 text-red-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow">
+        <div className="p-6 transition-shadow bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Total Value</p>
+              <p className="mb-1 text-sm text-gray-600">Total Value</p>
               <h3 className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue)}</h3>
             </div>
-            <div className="bg-green-100 p-3 rounded-lg">
+            <div className="p-3 bg-green-100 rounded-lg">
               <DollarSign className="w-6 h-6 text-green-600" />
             </div>
           </div>
         </div>
 
         <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
+          className="p-6 transition-shadow bg-white border border-gray-100 shadow-sm cursor-pointer rounded-xl hover:shadow-md"
           onClick={handleTodaySalesClick}
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 mb-1">Today's Sales</p>
+              <p className="mb-1 text-sm text-gray-600">Today's Sales</p>
               <h3 className="text-2xl font-bold text-gray-900">{formatCurrency(stats.todaySales)}</h3>
-              <p className="text-xs text-gray-500 mt-1">Click to view details</p>
+              <p className="mt-1 text-xs text-blue-500">View more details</p>
             </div>
-            <div className="bg-blue-100 p-3 rounded-lg">
+            <div className="p-3 bg-blue-100 rounded-lg">
               <TrendingUp className="w-6 h-6 text-blue-600" />
             </div>
           </div>
@@ -178,15 +178,15 @@ const Dashboard = () => {
       </div>
 
       {/* Recent Sales and Alerts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Sales</h2>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Recent Sales</h2>
           <div className="space-y-3">
             {recentSales.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No sales today</p>
+              <p className="py-4 text-center text-gray-500">No sales today</p>
             ) : (
               recentSales.map((transaction, index) => (
-                <div key={transaction.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={transaction.id || index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
                   <div>
                     <p className="font-medium text-gray-900">{transaction.transactionNumber}</p>
                     <p className="text-sm text-gray-600">{transaction.itemCount} item{transaction.itemCount !== 1 ? "s" : ""}</p>
@@ -200,14 +200,14 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Low Stock Alerts</h2>
+        <div className="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Low Stock Alerts</h2>
           <div className="space-y-3">
             {lowStockAlerts.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">No low stock alerts</p>
+              <p className="py-4 text-center text-gray-500">No low stock alerts</p>
             ) : (
               lowStockAlerts.map((alert, index) => (
-                <div key={index} className="flex items-start p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-400">
+                <div key={index} className="flex items-start p-3 border-l-4 border-yellow-400 rounded-lg bg-yellow-50">
                   <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
                   <p className="text-sm text-gray-700">{alert.message}</p>
                 </div>
@@ -224,7 +224,7 @@ const Dashboard = () => {
             <div className="bg-gradient-to-r from-[#1b65f6] to-[#4a8af7] text-white p-6 flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-bold">Sales Report</h3>
-                <p className="text-sm text-blue-100 mt-1">
+                <p className="mt-1 text-sm text-blue-100">
                   View sales transactions by date range
                 </p>
               </div>
@@ -245,12 +245,12 @@ const Dashboard = () => {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1">
+            <div className="flex-1 p-6 overflow-y-auto">
               {/* Date Range Filters */}
               <div className="mb-6 space-y-4">
                 <div className="flex space-x-4">
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block mb-1 text-sm font-medium text-gray-700">
                       From Date
                     </label>
                     <CustomDatePicker
@@ -260,7 +260,7 @@ const Dashboard = () => {
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block mb-1 text-sm font-medium text-gray-700">
                       To Date
                     </label>
                     <CustomDatePicker
@@ -282,11 +282,11 @@ const Dashboard = () => {
                 </div>
 
                 {/* Total Sales Summary */}
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
+                <div className="p-4 border border-green-200 rounded-lg bg-gradient-to-r from-green-50 to-blue-50">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-gray-600">Total Sales (Selected Period)</p>
-                      <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                      <h3 className="mt-1 text-2xl font-bold text-gray-900">
                         {formatCurrency(calculateTotalSales())}
                       </h3>
                     </div>
@@ -309,7 +309,7 @@ const Dashboard = () => {
                     key: "transactionNumber",
                     label: "Transaction #",
                     render: (row) => (
-                      <span className="text-sm text-gray-900 font-medium">
+                      <span className="text-sm font-medium text-gray-900">
                         {row.transactionNumber || "-"}
                       </span>
                     ),
@@ -353,7 +353,7 @@ const Dashboard = () => {
                 itemsPerPageOptions={[10, 25, 50, 100]}
                 totalResults={filteredSales.length}
                 emptyState={
-                  <div className="text-center py-8">
+                  <div className="py-8 text-center">
                     <p className="text-gray-500">No sales found for the selected period</p>
                   </div>
                 }

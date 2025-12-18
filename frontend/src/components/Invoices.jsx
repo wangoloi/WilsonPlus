@@ -239,7 +239,7 @@ const Invoices = () => {
     <div className="p-6 space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">Purchase Invoices</h2>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="mt-1 text-sm text-gray-600">
           Invoices from suppliers for inventory purchases
         </p>
       </div>
@@ -247,7 +247,7 @@ const Invoices = () => {
       <div className="space-y-4">
         {/* Search Bar */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute w-5 h-5 text-gray-400 transform -translate-y-1/2 left-3 top-1/2" />
           <input
             type="text"
             placeholder="Search by invoice number..."
@@ -260,7 +260,7 @@ const Invoices = () => {
         {/* Date Filters */}
         <div className="flex space-x-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700">
               From Date
             </label>
             <CustomDatePicker
@@ -270,7 +270,7 @@ const Invoices = () => {
             />
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block mb-1 text-sm font-medium text-gray-700">
               To Date
             </label>
             <CustomDatePicker
@@ -283,7 +283,7 @@ const Invoices = () => {
           <div className="flex items-end space-x-2">
             <button
               onClick={handleFilter}
-              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-gray-200 transition-colors"
+              className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
             >
               <Filter className="w-5 h-5" />
               <span>Filter</span>
@@ -291,7 +291,7 @@ const Invoices = () => {
             {(dateFrom || dateTo || allInvoices.length > 0) && (
               <button
                 onClick={handlePrint}
-                className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-gray-200 transition-colors"
+                className="flex items-center px-4 py-2 space-x-2 text-gray-700 transition-colors bg-gray-100 rounded-lg hover:bg-gray-200"
               >
                 <Printer className="w-5 h-5" />
                 <span>Print</span>
@@ -357,12 +357,12 @@ const Invoices = () => {
                 >
                   <Eye className="w-4 h-4" />
                 </button>
-                <button
+                {/* <button
                   onClick={() => handleDeleteClick(row.id)}
                   className="text-red-600 hover:text-red-700"
                 >
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </button> */}
               </div>
             ),
           },
@@ -378,7 +378,7 @@ const Invoices = () => {
         itemsPerPageOptions={[10, 25, 50, 100]}
         totalResults={totalItems}
         emptyState={
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <p className="text-gray-500">No invoices found</p>
           </div>
         }
@@ -417,8 +417,8 @@ const Invoices = () => {
                 selectedInvoice.batches.length > 0 &&
                 selectedInvoice.batches[0]?.vehicleNumber && (
                   <div>
-                    <p className="text-sm text-gray-600 mb-1">Vehicle Number</p>
-                    <p className="font-semibold text-lg">
+                    <p className="mb-1 text-sm text-gray-600">Vehicle Number</p>
+                    <p className="text-lg font-semibold">
                       {selectedInvoice.batches[0].vehicleNumber}
                     </p>
                   </div>
