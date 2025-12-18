@@ -128,7 +128,7 @@ const Login = ({ onLogin }) => {
         </form>
 
         <div className="mt-6 text-sm text-center text-gray-600">
-          <p>Default: username and password required</p>
+          {/* <p>Default: username and password required</p> */}
         </div>
       </div>
     </div>
