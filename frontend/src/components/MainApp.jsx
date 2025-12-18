@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { LayoutDashboard, Package, ShoppingCart, FileText, Bell, Menu, X, User, LogOut, Key, Settings, ChevronDown } from "lucide-react";
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  FileText,
+  Bell,
+  Menu,
+  X,
+  LogOut,
+  Key,
+  Settings,
+  ChevronDown,
+} from "lucide-react";
 import Dashboard from "./Dashboard";
 import Materials from "./Materials";
 import Sales from "./Sales";
@@ -17,9 +29,19 @@ const MainApp = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showChangeUsernameModal, setShowChangeUsernameModal] = useState(false);
-  const [passwordForm, setPasswordForm] = useState({ current: "", new: "", confirm: "" });
+  const [passwordForm, setPasswordForm] = useState({
+    current: "",
+    new: "",
+    confirm: "",
+  });
   const [newUsername, setNewUsername] = useState("");
-  const [alertModal, setAlertModal] = useState({ isOpen: false, type: "info", title: "", message: "" });
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    type: "info",
+    title: "",
+    message: "",
+  });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -90,19 +112,32 @@ const MainApp = () => {
     return username.substring(0, 2).toUpperCase();
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    // Small delay to show the loader
+    await new Promise((resolve) => setTimeout(resolve, 500));
     localStorage.removeItem("wilsonplus_auth");
     window.location.reload();
   };
 
   const handleChangePassword = async () => {
     if (!passwordForm.new || passwordForm.new !== passwordForm.confirm) {
-      setAlertModal({ isOpen: true, type: "warning", title: "Validation Error", message: "New passwords do not match" });
+      setAlertModal({
+        isOpen: true,
+        type: "warning",
+        title: "Validation Error",
+        message: "New passwords do not match",
+      });
       return;
     }
 
     if (passwordForm.new.length < 6) {
-      setAlertModal({ isOpen: true, type: "warning", title: "Validation Error", message: "Password must be at least 6 characters" });
+      setAlertModal({
+        isOpen: true,
+        type: "warning",
+        title: "Validation Error",
+        message: "Password must be at least 6 characters",
+      });
       return;
     }
 
@@ -113,35 +148,73 @@ const MainApp = () => {
         passwordForm.new
       );
       if (result.success) {
-        setAlertModal({ isOpen: true, type: "success", title: "Success", message: "Password changed successfully" });
+        setAlertModal({
+          isOpen: true,
+          type: "success",
+          title: "Success",
+          message: "Password changed successfully",
+        });
         setShowChangePasswordModal(false);
         setPasswordForm({ current: "", new: "", confirm: "" });
       } else {
-        setAlertModal({ isOpen: true, type: "error", title: "Error", message: result.error || "Failed to change password" });
+        setAlertModal({
+          isOpen: true,
+          type: "error",
+          title: "Error",
+          message: result.error || "Failed to change password",
+        });
       }
     } catch (error) {
-      setAlertModal({ isOpen: true, type: "error", title: "Error", message: "Failed to change password" });
+      setAlertModal({
+        isOpen: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to change password",
+      });
     }
   };
 
   const handleChangeUsername = async () => {
     if (!newUsername || newUsername.length < 3) {
-      setAlertModal({ isOpen: true, type: "warning", title: "Validation Error", message: "Username must be at least 3 characters" });
+      setAlertModal({
+        isOpen: true,
+        type: "warning",
+        title: "Validation Error",
+        message: "Username must be at least 3 characters",
+      });
       return;
     }
 
     try {
-      const result = await window.electronAPI.changeUsername(userProfile.id, newUsername);
+      const result = await window.electronAPI.changeUsername(
+        userProfile.id,
+        newUsername
+      );
       if (result.success) {
-        setAlertModal({ isOpen: true, type: "success", title: "Success", message: "Username changed successfully" });
+        setAlertModal({
+          isOpen: true,
+          type: "success",
+          title: "Success",
+          message: "Username changed successfully",
+        });
         setShowChangeUsernameModal(false);
         setNewUsername("");
         loadUserProfile(userProfile.id);
       } else {
-        setAlertModal({ isOpen: true, type: "error", title: "Error", message: result.error || "Failed to change username" });
+        setAlertModal({
+          isOpen: true,
+          type: "error",
+          title: "Error",
+          message: result.error || "Failed to change username",
+        });
       }
     } catch (error) {
-      setAlertModal({ isOpen: true, type: "error", title: "Error", message: "Failed to change username" });
+      setAlertModal({
+        isOpen: true,
+        type: "error",
+        title: "Error",
+        message: "Failed to change username",
+      });
     }
   };
 
@@ -194,9 +267,7 @@ const MainApp = () => {
               className="object-cover w-12 h-12"
             />
             <div>
-              <h1 className="text-2xl font-bold text-[#1b65f6]">
-                WilsonPlus
-              </h1>
+              <h1 className="text-2xl font-bold text-[#1b65f6]">WilsonPlus</h1>
               <p className="mt-1 text-xs text-gray-500">Inventory Management</p>
             </div>
           </div>
@@ -254,7 +325,11 @@ const MainApp = () => {
                 </p>
                 <p className="text-xs text-gray-500">Profile</p>
               </div>
-              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${showUserMenu ? "rotate-180" : ""}`} />
+              <ChevronDown
+                className={`w-4 h-4 text-gray-500 transition-transform ${
+                  showUserMenu ? "rotate-180" : ""
+                }`}
+              />
             </button>
 
             {showUserMenu && (
@@ -283,10 +358,20 @@ const MainApp = () => {
                 <div className="border-t border-gray-200"></div>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center w-full px-4 py-2 space-x-2 text-sm text-red-600 transition-colors hover:bg-red-50"
+                  disabled={isLoggingOut}
+                  className="flex items-center w-full px-4 py-2 space-x-2 text-sm text-red-600 transition-colors hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span>Logout</span>
+                  {isLoggingOut ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span>Logging out...</span>
+                    </>
+                  ) : (
+                    <>
+                      <LogOut className="w-4 h-4" />
+                      <span>Logout</span>
+                    </>
+                  )}
                 </button>
               </div>
             )}
@@ -316,9 +401,7 @@ const MainApp = () => {
           </button>
         )}
 
-        <div className="pl-0 lg:pl-0">
-          {renderContent()}
-        </div>
+        <div className="pl-0 lg:pl-0">{renderContent()}</div>
       </main>
 
       {/* Change Password Modal */}
@@ -339,29 +422,47 @@ const MainApp = () => {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Current Password</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Current Password
+                </label>
                 <input
                   type="password"
                   value={passwordForm.current}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      current: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">New Password</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  New Password
+                </label>
                 <input
                   type="password"
                   value={passwordForm.new}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, new: e.target.value })}
+                  onChange={(e) =>
+                    setPasswordForm({ ...passwordForm, new: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">Confirm New Password</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Confirm New Password
+                </label>
                 <input
                   type="password"
                   value={passwordForm.confirm}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      confirm: e.target.value,
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
                 />
               </div>
@@ -405,7 +506,9 @@ const MainApp = () => {
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">New Username</label>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  New Username
+                </label>
                 <input
                   type="text"
                   value={newUsername}
@@ -439,16 +542,28 @@ const MainApp = () => {
       {/* Alert Modal */}
       <Modal
         isOpen={alertModal.isOpen}
-        onClose={() => setAlertModal({ isOpen: false, type: "info", title: "", message: "" })}
+        onClose={() =>
+          setAlertModal({ isOpen: false, type: "info", title: "", message: "" })
+        }
         type={alertModal.type}
         title={alertModal.title}
         message={alertModal.message}
         confirmText="OK"
         showCancel={false}
       />
+
+      {/* Logout Loader Overlay */}
+      {isLoggingOut && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-xl shadow-xl p-8 flex flex-col items-center space-y-4">
+            <div className="w-16 h-16 border-4 border-[#1b65f6] border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-lg font-medium text-gray-900">Logging out...</p>
+            <p className="text-sm text-gray-600">Please wait</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default MainApp;
-

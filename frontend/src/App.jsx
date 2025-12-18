@@ -41,7 +41,9 @@ function App() {
           <h2 className="mt-4 text-xl font-semibold text-white">
             Loading WilsonPlus...
           </h2>
-          <p className="mt-2 text-white/80">Building Materials & Paints Inventory Management</p>
+          <p className="mt-2 text-white/80">
+            Building Materials & Paints Inventory Management
+          </p>
         </div>
       </div>
     );
