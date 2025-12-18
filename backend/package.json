@@ -1,0 +1,43 @@
+{
+  "name": "wilsonplus-backend",
+  "version": "1.0.0",
+  "description": "WilsonPlus Backend - Manage Inventory Now!",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "dev": "nodemon src/main.js",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "keywords": [
+    "hostel",
+    "management",
+    "electron",
+    "sqlite",
+    "ddd"
+  ],
+  "author": {
+    "name": "WilsonPlus",
+    "email": "info@wilsonplus.com"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^16.6.1",
+    "electron-log": "^5.3.0",
+    "nodemailer": "^7.0.5",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@electron-forge/maker-deb": "^7.8.3",
+    "@electron-forge/maker-rpm": "^7.8.3",
+    "@electron-forge/maker-squirrel": "^7.8.3",
+    "@electron-forge/maker-zip": "^7.8.3",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.8.3",
+    "@electron-forge/plugin-fuses": "^7.8.3",
+    "@electron/fuses": "^1.8.0",
+    "electron": "^33.4.11",
+    "nodemon": "^3.1.9"
+  }
+}

@@ -1,0 +1,376 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for WilsonPlus Color Scheme */
+:root {
+  /* Primary Colors */
+  --primary-dark-blue: #1b65f6;
+  --primary-medium-blue: #4a8af7;
+  --primary-light-blue: #7ba5f9;
+
+  /* Neutral Colors */
+  --neutral-white: #ffffff;
+  --light-gray: #f5f6f8;
+  --medium-gray: #9ca3af;
+  --dark-gray: #111827;
+
+  /* Status Colors */
+  --success-green: #10b981;
+  --warning-orange: #f59e0b;
+  --error-red: #ef4444;
+  --info-blue: #3b82f6;
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--light-gray);
+  /* color: var(--dark-gray); */
+  line-height: 1.6;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace;
+}
+
+/* Login Form Input Fixes */
+.login-form input {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+  -webkit-text-fill-color: #ffffff;
+}
+
+.login-form input::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.login-form input:focus {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.login-form input:-webkit-autofill,
+.login-form input:-webkit-autofill:hover,
+.login-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #ffffff !important;
+  -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.1) inset !important;
+  transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--medium-gray);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d3d3d3;
+}
+
+/* Custom Components */
+@layer components {
+  /* Buttons */
+  .btn-primary {
+    @apply bg-[#1b65f6] hover:bg-[#4a8af7] text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-[#1b65f6] font-medium py-2 px-4 rounded-lg border border-[#7ba5f9] transition-colors duration-200;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  .btn-success {
+    @apply bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow duration-200;
+  }
+
+  .card-header {
+    @apply border-b border-gray-100 pb-4 mb-4;
+  }
+
+  /* Forms */
+  .form-input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 focus:border-primary-light transition-colors duration-300;
+    color: #374151 !important; /* Dark gray text for better visibility */
+    background-color: #ffffff !important;
+  }
+
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+
+  .form-error {
+    @apply text-red-500 text-sm mt-1;
+  }
+
+  /* Input Focus Fix - Override all focus styles */
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #7ba5f9 !important;
+    color: #374151 !important; /* Ensure text stays dark on focus */
+  }
+
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[]:focus,
+  input[type="tel"]:focus,
+  input[type="search"]:focus,
+  input[type="date"]:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: #7ba5f9 !important;
+    color: #374151 !important;
+  }
+
+  /* General input styling for better visibility */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[],
+  input[type="tel"],
+  input[type="search"],
+  input[type="date"],
+  textarea,
+  select {
+    color: #374151 !important;
+    background-color: #ffffff !important;
+    -webkit-text-fill-color: #374151 !important;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #d1d5db !important; /* Much lighter gray for faint appearance */
+    opacity: 0.6 !important; /* Reduced opacity for subtle look */
+  }
+
+  /* Tables */
+  .table-container {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden;
+  }
+
+  .table-header {
+    @apply bg-[#F5F6F8] px-6 py-4 border-b border-gray-200;
+  }
+
+  /* Status Badges */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-100 text-green-800;
+  }
+
+  .badge-warning {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+
+  .badge-error {
+    @apply bg-red-100 text-red-800;
+  }
+
+  .badge-info {
+    @apply bg-blue-100 text-blue-800;
+  }
+
+  .badge-neutral {
+    @apply bg-gray-100 text-gray-800;
+  }
+
+  /* Sidebar Styles */
+  .sidebar-item {
+    @apply flex items-center space-x-3 px-4 py-3 text-gray-700 hover:bg-[#7ba5f9]/10 hover:text-[#1b65f6] rounded-lg transition-colors duration-200 cursor-pointer;
+  }
+
+  .sidebar-item-active {
+    @apply bg-[#1b65f6] text-white hover:bg-[#4a8af7] hover:text-white;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    @apply animate-spin rounded-full border-t-2 border-b-2 border-[#4a8af7];
+  }
+
+  /* Animations */
+  .fade-in {
+    @apply animate-[fadeIn_0.5s_ease-in-out];
+  }
+
+  .slide-up {
+    @apply animate-[slideUp_0.3s_ease-out];
+  }
+}
+
+/* Custom Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes gradient-x {
+  0%,
+  100% {
+    transform: translateX(0%);
+  }
+  50% {
+    transform: translateX(100%);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .card {
+    @apply p-4;
+  }
+
+  .table-container {
+    @apply overflow-x-auto;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .print-break {
+    page-break-after: always;
+  }
+}
+
+/* Focus Styles for Accessibility */
+.focus-visible:focus-visible {
+  @apply outline-2 outline-offset-2 outline-[#4a8af7];
+}
+
+/* Dark Mode Support (Optional) */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --light-gray: #1f2937;
+    --medium-gray: #6b7280;
+    --dark-gray: #f9fafb;
+  }
+}
+
+/* Custom Utility Classes */
+.text-primary {
+  color: var(--primary-dark-blue);
+}
+
+.text-secondary {
+  color: var(--primary-medium-blue);
+}
+
+.text-accent {
+  color: var(--primary-light-blue);
+}
+
+.bg-primary {
+  background-color: var(--primary-dark-blue);
+}
+
+.bg-secondary {
+  background-color: var(--primary-medium-blue);
+}
+
+.bg-accent {
+  background-color: var(--primary-light-blue);
+}
+
+.border-primary {
+  border-color: var(--primary-dark-blue);
+}
+
+.border-secondary {
+  border-color: var(--primary-medium-blue);
+}
+
+.border-accent {
+  border-color: var(--primary-light-blue);
+}
+
+/* Hover Effects */
+.hover-lift {
+  @apply transition-transform duration-200 hover:-translate-y-1;
+}
+
+.hover-shadow {
+  @apply transition-shadow duration-200 hover:shadow-lg;
+}
+
+/* Glass Effect */
+.glass {
+  @apply bg-white/80 backdrop-blur-sm border border-white/20;
+}
+
+/* Gradient Backgrounds */
+.gradient-primary {
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark-blue),
+    var(--primary-medium-blue)
+  );
+}
+
+.gradient-accent {
+  background: linear-gradient(
+    135deg,
+    var(--primary-medium-blue),
+    var(--primary-light-blue)
+  );
+}

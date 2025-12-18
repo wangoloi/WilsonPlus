@@ -1,0 +1,97 @@
+{
+  "name": "wilsonplus",
+  "productName": "WilsonPlus",
+  "version": "1.0.0",
+  "description": "WilsonPlus - Manage Inventory Now!",
+  "main": "backend/src/main.js",
+  "scripts": {
+    "dev": "node start.js --dev",
+    "build": "cd frontend && npm run build",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:build:linux": "npm run build && electron-builder --linux",
+    "electron:pack": "npm run build && electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.wilsonplus.app",
+    "productName": "WilsonPlus",
+    "directories": {
+      "output": "dist",
+      "app": "."
+    },
+    "files": [
+      "frontend/build/**/*",
+      "backend/**/*",
+      "node_modules/dotenv/**/*",
+      "node_modules/nodemailer/**/*",
+      "node_modules/sqlite3/**/*",
+      "node_modules/bcrypt/**/*",
+      "node_modules/electron-log/**/*",
+      "node_modules/smart-buffer/**/*",
+      "!**/*.map",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin",
+      "!**/*.{iml,o,hprof,orig,pyc,pyo,rbc,swp,csproj,sln,xproj}",
+      "!.editorconfig",
+      "!**/._*",
+      "!**/{.DS_Store,.git,.hg,.svn,CVS,RCS,SCCS,.gitignore,.gitattributes}",
+      "!**/{__pycache__,thumbs.db,.flowconfig,.idea,.vs,.nyc_output}",
+      "!**/{appveyor.yml,.travis.yml,circle.yml}",
+      "!**/{npm-debug.log,yarn.lock,.yarn-integrity,.yarn-metadata.json}",
+      "!backend/package-lock.json",
+      "!frontend/package-lock.json"
+    ],
+    "extraResources": [],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "frontend/src/assets/icons/wilsonplus_logo.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "artifactName": "WilsonPlus-Setup-${version}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WilsonPlus",
+      "uninstallDisplayName": "WilsonPlus",
+      "installerIcon": "frontend/src/assets/icons/wilsonplus_logo.ico",
+      "uninstallerIcon": "frontend/src/assets/icons/wilsonplus_logo.ico",
+      "perMachine": false,
+      "allowElevation": false
+    },
+    "portable": {
+      "artifactName": "WilsonPlus-Portable-${version}.${ext}"
+    }
+  },
+  "devDependencies": {
+    "copyfiles": "^2.4.1",
+    "electron": "^33.2.1",
+    "electron-builder": "^26.0.12"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.1",
+    "electron-log": "^5.4.2",
+    "nodemailer": "^7.0.5",
+    "smart-buffer": "^4.2.0",
+    "sqlite3": "^5.1.7"
+  }
+}
