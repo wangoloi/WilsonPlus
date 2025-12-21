@@ -162,7 +162,6 @@ const Materials = () => {
       itemName: "",
       quantity: "",
       rate: "",
-      quality: "",
     });
   };
 
@@ -171,6 +170,7 @@ const Materials = () => {
   };
 
   const handleSubmit = async (e) => {
+
     e.preventDefault();
 
     if (!formData.invoiceNumber) {
@@ -203,6 +203,7 @@ const Materials = () => {
       itemsToSubmit.push(currentItem);
     }
 
+    // Making changes above sir
     if (itemsToSubmit.length === 0) {
       showAlert("warning", "Validation Error", "Please add at least one item");
       return;
@@ -262,6 +263,7 @@ const Materials = () => {
     }
   };
 
+
   const handleItemNameAdd = (newName) => {
     if (newName && !itemNames.includes(newName)) {
       setItemNames([...itemNames, newName].sort());
@@ -300,8 +302,9 @@ const Materials = () => {
               ADD INVENTORY
             </h3>
           </div>
-
-          <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          
+          {/* Add inventory changed to a div.. */}
+          <form onSubmit={handleSubmit}  className="p-6 space-y-6">
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
