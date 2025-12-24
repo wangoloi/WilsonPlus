@@ -170,7 +170,6 @@ const Materials = () => {
   };
 
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     if (!formData.invoiceNumber) {
@@ -178,16 +177,19 @@ const Materials = () => {
       return;
     }
 
-    // Check if there's a current item in the form that hasn't been added yet
-    let itemsToSubmit = [...formItems];
+    let itemsToSubmit = [];
 
-    if (
+    // If there are items in Added Items, use only those
+    if (formItems.length > 0) {
+      itemsToSubmit = [...formItems];
+    } 
+    // If no items in Added Items, but form fields are complete, allow direct save
+    else if (
       formData.itemName &&
       formData.quantity &&
       formData.rate &&
       formData.category
     ) {
-      // Add the current form item to the items array
       const itemTotal =
         parseFloat(formData.quantity) * parseFloat(formData.rate);
       const currentItem = {
@@ -200,10 +202,14 @@ const Materials = () => {
         quality: formData.quality,
         category: formData.category,
       };
-      itemsToSubmit.push(currentItem);
+      itemsToSubmit = [currentItem];
+    } 
+    // Otherwise, show error
+    else {
+      showAlert("warning", "Validation Error", "Please add at least one item to the Added Items list or fill in all required fields");
+      return;
     }
 
-    // Making changes above sir
     if (itemsToSubmit.length === 0) {
       showAlert("warning", "Validation Error", "Please add at least one item");
       return;
@@ -329,7 +335,7 @@ const Materials = () => {
             {!formData.useSystemDate && (
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Date: *
+                  Date: <span className="text-red-500">*</span>
                 </label>
                 <CustomDatePicker
                   value={formData.date}
@@ -342,7 +348,7 @@ const Materials = () => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Invoice No: *
+                  Invoice No: <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -377,7 +383,7 @@ const Materials = () => {
 
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Item Name: *
+                  Item Name: <span className="text-red-500">*</span>
                 </label>
                 <ItemNameDropdown
                   options={itemNames}
@@ -392,7 +398,7 @@ const Materials = () => {
 
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Quantity: *
+                  Quantity: <span className="text-red-500">*</span>
                 </label>
                 <input
                   // type="number"
@@ -409,7 +415,7 @@ const Materials = () => {
 
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Rate: *
+                  Rate: <span className="text-red-500">*</span>
                 </label>
                 <input
                   // type="number"
@@ -428,25 +434,27 @@ const Materials = () => {
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Quality:
                 </label>
-                <Dropdown
-                  options={[
-                    { value: "", label: "Select Quality" },
-                    { value: "Premium", label: "Premium" },
-                    { value: "Standard", label: "Standard" },
-                    { value: "Good", label: "Good" },
-                    { value: "Fair", label: "Fair" },
-                  ]}
+                <input
+                  type="text"
+                  list="quality-options"
                   value={formData.quality}
-                  onChange={(value) =>
-                    setFormData({ ...formData, quality: value })
+                  onChange={(e) =>
+                    setFormData({ ...formData, quality: e.target.value })
                   }
-                  placeholder="Select Quality"
+                  placeholder="Enter or select quality"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
                 />
+                <datalist id="quality-options">
+                  <option value="Premium" />
+                  <option value="Standard" />
+                  <option value="Good" />
+                  <option value="Fair" />
+                </datalist>
               </div>
 
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Category: *
+                  Category: <span className="text-red-500">*</span>
                 </label>
                 <Dropdown
                   options={[
@@ -518,12 +526,15 @@ const Materials = () => {
               <button
                 type="submit"
                 disabled={
+                  // Always require invoice number
                   !formData.invoiceNumber ||
-                  ((!formData.itemName ||
-                    !formData.quantity ||
-                    !formData.rate ||
-                    !formData.category) &&
-                    formItems.length === 0)
+                  // If no items in Added Items, require all form fields to be filled
+                  (formItems.length === 0 &&
+                    (!formData.itemName ||
+                      !formData.quantity ||
+                      !formData.rate ||
+                      !formData.category))
+                  // If items exist in Added Items, only invoice number is required (no form field check)
                 }
                 className="flex-1 bg-[#1b65f6] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#4a8af7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
