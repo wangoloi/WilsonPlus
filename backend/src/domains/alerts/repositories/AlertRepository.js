@@ -107,6 +107,38 @@ class AlertRepository {
       );
     });
   }
+
+  async delete(alertId) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        "DELETE FROM alerts WHERE id = ?",
+        [alertId],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.changes > 0);
+          }
+        }
+      );
+    });
+  }
+
+  async deleteAll() {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        "DELETE FROM alerts",
+        [],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.changes);
+          }
+        }
+      );
+    });
+  }
 }
 
 module.exports = AlertRepository;

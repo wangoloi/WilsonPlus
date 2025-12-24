@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Filter, Eye, X, Printer, Trash2 } from "lucide-react";
+import { Plus, Filter, Eye, X, Printer, Trash2, Search } from "lucide-react";
 import SaleModal from "./SaleModal";
 import CustomDatePicker from "../shared/CustomDatepicker";
 import Modal from "../shared/Modal";
@@ -8,10 +8,12 @@ import DataTable from "../shared/DataTable";
 const Sales = () => {
   const [transactions, setTransactions] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
+  const [filteredTransactions, setFilteredTransactions] = useState([]); // For search results
   const [loading, setLoading] = useState(true);
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [dateFrom, setDateFrom] = useState(null);
   const [dateTo, setDateTo] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [transactionDetails, setTransactionDetails] = useState(null);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -24,6 +26,31 @@ const Sales = () => {
     loadTransactions();
   }, [currentPage, itemsPerPage]);
 
+  // Handle pagination for filtered transactions
+  useEffect(() => {
+    if (filteredTransactions.length > 0 || allTransactions.length > 0) {
+      const source = filteredTransactions.length > 0 ? filteredTransactions : allTransactions;
+      const offset = (currentPage - 1) * itemsPerPage;
+      const paginatedTransactions = source.slice(offset, offset + itemsPerPage);
+      setTransactions(paginatedTransactions);
+    }
+  }, [currentPage, itemsPerPage, filteredTransactions, allTransactions]);
+
+  // Auto-search with debounce
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      loadTransactions();
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      handleSearch(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
   const loadTransactions = async () => {
     try {
       setLoading(true);
@@ -31,18 +58,50 @@ const Sales = () => {
       if (result.success) {
         const all = result.data || [];
         setAllTransactions(all);
-        setTotalItems(all.length);
-
-        // Apply pagination
-        const offset = (currentPage - 1) * itemsPerPage;
-        const paginatedTransactions = all.slice(offset, offset + itemsPerPage);
-        setTransactions(paginatedTransactions);
+        setFilteredTransactions(all);
+        
+        // Apply search if there's a query
+        if (searchQuery.trim()) {
+          handleSearch(searchQuery);
+        } else {
+          setTotalItems(all.length);
+          // Apply pagination
+          const offset = (currentPage - 1) * itemsPerPage;
+          const paginatedTransactions = all.slice(offset, offset + itemsPerPage);
+          setTransactions(paginatedTransactions);
+        }
       }
     } catch (error) {
       console.error("Error loading transactions:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (query = searchQuery) => {
+    if (!query || !query.trim()) {
+      // Reload all transactions
+      const offset = (currentPage - 1) * itemsPerPage;
+      const paginatedTransactions = allTransactions.slice(offset, offset + itemsPerPage);
+      setTransactions(paginatedTransactions);
+      setTotalItems(allTransactions.length);
+      return;
+    }
+
+    const searchTerm = query.toLowerCase().trim();
+    const filtered = allTransactions.filter((transaction) => {
+      const transactionNumber = (transaction.transactionNumber || "").toLowerCase();
+      const customerName = (transaction.customerName || "").toLowerCase();
+      return transactionNumber.includes(searchTerm) || customerName.includes(searchTerm);
+    });
+
+    setTotalItems(filtered.length);
+    setCurrentPage(1);
+
+    // Apply pagination
+    const offset = 0;
+    const paginatedTransactions = filtered.slice(offset, offset + itemsPerPage);
+    setTransactions(paginatedTransactions);
   };
 
   const handleFilter = async () => {
@@ -68,16 +127,33 @@ const Sales = () => {
       if (result.success) {
         const filteredTransactions = result.data || [];
         setAllTransactions(filteredTransactions);
-        setTotalItems(filteredTransactions.length);
-        setCurrentPage(1);
-
-        // Apply pagination
-        const offset = 0;
-        const paginatedTransactions = filteredTransactions.slice(
-          offset,
-          offset + itemsPerPage
-        );
-        setTransactions(paginatedTransactions);
+        
+        // Apply search if there's a search query
+        if (searchQuery.trim()) {
+          const searchTerm = searchQuery.toLowerCase().trim();
+          const searchFiltered = filteredTransactions.filter((transaction) => {
+            const transactionNumber = (transaction.transactionNumber || "").toLowerCase();
+            const customerName = (transaction.customerName || "").toLowerCase();
+            return transactionNumber.includes(searchTerm) || customerName.includes(searchTerm);
+          });
+          setFilteredTransactions(searchFiltered);
+          setTotalItems(searchFiltered.length);
+          setCurrentPage(1);
+          const offset = 0;
+          const paginatedTransactions = searchFiltered.slice(offset, offset + itemsPerPage);
+          setTransactions(paginatedTransactions);
+        } else {
+          setFilteredTransactions(filteredTransactions);
+          setTotalItems(filteredTransactions.length);
+          setCurrentPage(1);
+          // Apply pagination
+          const offset = 0;
+          const paginatedTransactions = filteredTransactions.slice(
+            offset,
+            offset + itemsPerPage
+          );
+          setTransactions(paginatedTransactions);
+        }
       }
     } catch (error) {
       console.error("Error filtering sales:", error);
@@ -128,6 +204,116 @@ const Sales = () => {
     }
   };
 
+  const handlePrintTransactionDetails = async () => {
+    if (!transactionDetails) return;
+
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const autoTable = await import("jspdf-autotable");
+
+      const doc = new jsPDF();
+      const pageWidth = doc.internal.pageSize.width;
+
+      // Header
+      doc.setFontSize(20);
+      doc.setTextColor(27, 101, 246);
+      doc.text("WilsonPlus", pageWidth / 2, 20, { align: "center" });
+
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Sale Transaction Details", pageWidth / 2, 35, { align: "center" });
+
+      doc.setFontSize(10);
+      doc.setTextColor(100, 100, 100);
+      doc.text(
+        `Transaction #: ${transactionDetails.transaction.transactionNumber}`,
+        14,
+        50
+      );
+      doc.text(
+        `Date: ${transactionDetails.transaction.date ? new Date(transactionDetails.transaction.date).toLocaleDateString() : "-"}`,
+        14,
+        57
+      );
+      if (transactionDetails.transaction.customerName) {
+        doc.text(
+          `Customer: ${transactionDetails.transaction.customerName}`,
+          14,
+          64
+        );
+      }
+
+      // Prepare table data
+      const tableData = transactionDetails.sales.map((sale) => [
+        sale.itemName || "-",
+        sale.quantity || 0,
+        `UGX ${(sale.unitPrice || 0).toLocaleString()}`,
+        `UGX ${(sale.total || 0).toLocaleString()}`,
+        `UGX ${(sale.profit || 0).toLocaleString()}`,
+      ]);
+
+      // Add table
+      autoTable.default(doc, {
+        head: [["Item Name", "Quantity", "Unit Price", "Total", "Profit"]],
+        body: tableData,
+        startY: transactionDetails.transaction.customerName ? 72 : 65,
+        styles: {
+          headStyles: { fillColor: [27, 101, 246] },
+          fontSize: 9,
+        },
+        headStyles: {
+          fillColor: [27, 101, 246],
+          textColor: 255,
+          fontStyle: "bold",
+        },
+      });
+
+      // Add totals
+      const totalAmount = transactionDetails.transaction.totalAmount || 0;
+      const totalProfit = transactionDetails.sales.reduce(
+        (sum, sale) => sum + (sale.profit || 0),
+        0
+      );
+
+      const finalY = doc.lastAutoTable.finalY || 65;
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Grand Total: UGX ${totalAmount.toLocaleString()}`, 14, finalY + 15);
+      doc.setFontSize(12);
+      doc.setTextColor(0, 150, 0);
+      doc.text(`Total Profit: UGX ${totalProfit.toLocaleString()}`, 14, finalY + 22);
+
+      // Footer
+      doc.setFontSize(8);
+      doc.setTextColor(100, 100, 100);
+      doc.text(
+        "WilsonPlus - Inventory Management System",
+        pageWidth / 2,
+        doc.internal.pageSize.height - 10,
+        { align: "center" }
+      );
+
+      // Generate PDF
+      const pdfDataUri = doc.output("datauristring");
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head><title>Transaction Details</title></head>
+            <body style="margin:0;padding:0;">
+              <embed src="${pdfDataUri}" type="application/pdf" width="100%" height="100%" />
+            </body>
+          </html>
+        `);
+      } else {
+        doc.save(`transaction-${transactionDetails.transaction.transactionNumber}-${new Date().toISOString().split("T")[0]}.pdf`);
+      }
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF");
+    }
+  };
+
   const handlePrint = async () => {
     try {
       const { default: jsPDF } = await import("jspdf");
@@ -163,19 +349,23 @@ const Sales = () => {
         );
       }
 
+      // Use filtered transactions for PDF (or allTransactions if no filter/search)
+      const transactionsForPDF = filteredTransactions.length > 0 ? filteredTransactions : allTransactions;
+      
       // Prepare table data
-      const tableData = allTransactions.map((transaction) => [
+      const tableData = transactionsForPDF.map((transaction) => [
         transaction.transactionNumber || "-",
         transaction.date
           ? new Date(transaction.date).toLocaleDateString()
           : "-",
+        transaction.customerName || "-",
         transaction.itemCount || 0,
         `UGX ${(transaction.totalAmount || 0).toLocaleString()}`,
       ]);
 
       // Add table
       autoTable.default(doc, {
-        head: [["Transaction #", "Date", "Items", "Total Amount"]],
+        head: [["Transaction #", "Date", "Customer", "Items", "Total Amount"]],
         body: tableData,
         startY: 60,
         styles: {
@@ -189,12 +379,29 @@ const Sales = () => {
         },
       });
 
+      // Calculate total profit - need to get all sales with batch info
+      let totalProfit = 0;
+      try {
+        for (const transaction of transactionsForPDF) {
+          const detailsResult = await window.electronAPI.getSalesTransactionDetails(transaction.id);
+          if (detailsResult.success && detailsResult.data.sales) {
+            const transactionProfit = detailsResult.data.sales.reduce(
+              (sum, sale) => sum + (sale.profit || 0),
+              0
+            );
+            totalProfit += transactionProfit;
+          }
+        }
+      } catch (error) {
+        console.error("Error calculating profit:", error);
+      }
+
       // Add summary
-      const totalAmount = allTransactions.reduce(
+      const totalAmount = transactionsForPDF.reduce(
         (sum, t) => sum + (t.totalAmount || 0),
         0
       );
-      const totalItems = allTransactions.reduce(
+      const totalItems = transactionsForPDF.reduce(
         (sum, t) => sum + (t.itemCount || 0),
         0
       );
@@ -203,7 +410,7 @@ const Sales = () => {
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
       doc.text(
-        `Total Transactions: ${allTransactions.length}`,
+        `Total Transactions: ${transactionsForPDF.length}`,
         14,
         finalY + 15
       );
@@ -214,6 +421,11 @@ const Sales = () => {
         `Grand Total: UGX ${totalAmount.toLocaleString()}`,
         14,
         finalY + 30
+      );
+      doc.text(
+        `Total Profit: UGX ${totalProfit.toLocaleString()}`,
+        14,
+        finalY + 38
       );
 
       // Footer
@@ -275,6 +487,19 @@ const Sales = () => {
       </div>
 
       <div className="flex space-x-4">
+        <div className="flex items-center flex-1 px-4 py-2 space-x-2 bg-white border border-gray-200 rounded-lg">
+          <Search className="w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by transaction number or customer name..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="flex-1 text-gray-700 duration-500 border-gray-200 rounded-lg outline-none"
+          />
+        </div>
         <div className="flex-1">
           <label className="block mb-1 text-sm font-medium text-gray-700">
             From Date
@@ -326,6 +551,15 @@ const Sales = () => {
             render: (row) => (
               <span className="text-sm text-gray-900">
                 {row.date ? new Date(row.date).toLocaleDateString() : "-"}
+              </span>
+            ),
+          },
+          {
+            key: "customerName",
+            label: "Customer",
+            render: (row) => (
+              <span className="text-sm text-gray-900">
+                {row.customerName || "-"}
               </span>
             ),
           },
@@ -393,15 +627,24 @@ const Sales = () => {
           <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full m-4 max-h-[90vh] overflow-y-auto">
             <div className="bg-gradient-to-r from-[#1b65f6] to-[#4a8af7] text-white p-6 rounded-t-xl flex items-center justify-between">
               <h3 className="text-xl font-bold">Sale Transaction Details</h3>
-              <button
-                onClick={() => {
-                  setSelectedTransaction(null);
-                  setTransactionDetails(null);
-                }}
-                className="text-white hover:text-gray-200"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handlePrintTransactionDetails}
+                  className="p-2 text-white transition-colors bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30"
+                  title="Print Transaction"
+                >
+                  <Printer className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    setSelectedTransaction(null);
+                    setTransactionDetails(null);
+                  }}
+                  className="text-white hover:text-gray-200"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
             <div className="p-6 space-y-6">
               {loadingDetails ? (
@@ -429,6 +672,12 @@ const Sales = () => {
                           : "-"}
                       </p>
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Customer Name</p>
+                      <p className="font-semibold">
+                        {transactionDetails.transaction.customerName || "-"}
+                      </p>
+                    </div>
                   </div>
 
                   <div>
@@ -451,6 +700,9 @@ const Sales = () => {
                             <th className="px-4 py-2 text-xs font-medium text-left text-gray-500 uppercase">
                               Total
                             </th>
+                            <th className="px-4 py-2 text-xs font-medium text-left text-gray-500 uppercase">
+                              Profit
+                            </th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -471,6 +723,9 @@ const Sales = () => {
                               <td className="px-4 py-3 text-sm font-semibold text-gray-900">
                                 UGX {sale.total?.toLocaleString() || "0"}
                               </td>
+                              <td className="px-4 py-3 text-sm font-semibold text-green-600">
+                                UGX {(sale.profit || 0).toLocaleString()}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -486,6 +741,13 @@ const Sales = () => {
                               UGX{" "}
                               {transactionDetails.transaction.totalAmount?.toLocaleString() ||
                                 "0"}
+                            </td>
+                            <td className="px-4 py-3 text-lg font-bold text-green-600">
+                              UGX{" "}
+                              {transactionDetails.sales.reduce(
+                                (sum, sale) => sum + (sale.profit || 0),
+                                0
+                              ).toLocaleString()}
                             </td>
                           </tr>
                         </tfoot>

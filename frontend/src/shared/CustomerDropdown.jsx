@@ -19,11 +19,11 @@ function getScrollableAncestors(node) {
   return scrollables;
 }
 
-const QualityDropdown = ({
+const CustomerDropdown = ({
   options = [],
   value,
   onChange,
-  placeholder = "Select or type quality",
+  placeholder = "Select or type customer name",
   className = "",
   disabled = false,
   onAddNew,
@@ -225,7 +225,7 @@ const QualityDropdown = ({
                       text-[#1b65f6] font-medium border-t border-gray-200
                     "
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="h-4 w-4" />
                     <span>Add "{searchTerm}"</span>
                   </button>
                 )}
@@ -239,4 +239,5 @@ const QualityDropdown = ({
   );
 };
 
-export default QualityDropdown;
+export default CustomerDropdown;
+

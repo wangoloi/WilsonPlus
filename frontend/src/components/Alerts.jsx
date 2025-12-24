@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Bell, Check, AlertTriangle } from "lucide-react";
+import { Bell, Check, AlertTriangle, Trash2 } from "lucide-react";
 import Pagination from "../shared/Pagination";
+import Modal from "../shared/Modal";
 
 const Alerts = () => {
   const [alerts, setAlerts] = useState([]);
@@ -8,6 +9,7 @@ const Alerts = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [totalItems, setTotalItems] = useState(0);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, alertId: null, deleteAll: false });
 
   useEffect(() => {
     loadAlerts();
@@ -60,6 +62,34 @@ const Alerts = () => {
     }
   };
 
+  const handleDeleteClick = (alertId) => {
+    setDeleteModal({ isOpen: true, alertId, deleteAll: false });
+  };
+
+  const handleDeleteAllClick = () => {
+    setDeleteModal({ isOpen: true, alertId: null, deleteAll: true });
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      if (deleteModal.deleteAll) {
+        const result = await window.electronAPI.deleteAllAlerts();
+        if (result.success) {
+          loadAlerts();
+          setAllAlerts([]);
+        }
+      } else if (deleteModal.alertId) {
+        const result = await window.electronAPI.deleteAlert(deleteModal.alertId);
+        if (result.success) {
+          loadAlerts();
+        }
+      }
+      setDeleteModal({ isOpen: false, alertId: null, deleteAll: false });
+    } catch (error) {
+      console.error("Error deleting alert:", error);
+    }
+  };
+
   // Calculate unread count from all alerts, not just current page
   const [allAlerts, setAllAlerts] = useState([]);
   useEffect(() => {
@@ -85,15 +115,26 @@ const Alerts = () => {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">Stock Alerts</h2>
-        {unreadCount > 0 && (
-          <button
-            onClick={handleMarkAllAsRead}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-gray-200 transition-colors"
-          >
-            <Check className="w-5 h-5" />
-            <span>Mark All Read</span>
-          </button>
-        )}
+        <div className="flex items-center space-x-2">
+          {alerts.length > 0 && (
+            <button
+              onClick={handleDeleteAllClick}
+              className="bg-red-100 text-red-700 px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-red-200 transition-colors"
+            >
+              <Trash2 className="w-5 h-5" />
+              <span>Delete All</span>
+            </button>
+          )}
+          {unreadCount > 0 && (
+            <button
+              onClick={handleMarkAllAsRead}
+              className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-gray-200 transition-colors"
+            >
+              <Check className="w-5 h-5" />
+              <span>Mark All Read</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -134,15 +175,24 @@ const Alerts = () => {
                         </p>
                       </div>
                     </div>
-                    {!alert.isRead && (
+                    <div className="flex items-center space-x-2 ml-4">
+                      {!alert.isRead && (
+                        <button
+                          onClick={() => handleMarkAsRead(alert.id)}
+                          className="text-gray-600 hover:text-gray-900"
+                          title="Mark as read"
+                        >
+                          <Check className="w-5 h-5" />
+                        </button>
+                      )}
                       <button
-                        onClick={() => handleMarkAsRead(alert.id)}
-                        className="ml-4 text-gray-600 hover:text-gray-900"
-                        title="Mark as read"
+                        onClick={() => handleDeleteClick(alert.id)}
+                        className="text-red-600 hover:text-red-700"
+                        title="Delete alert"
                       >
-                        <Check className="w-5 h-5" />
+                        <Trash2 className="w-5 h-5" />
                       </button>
-                    )}
+                    </div>
                   </div>
                 </div>
               ))
@@ -163,6 +213,17 @@ const Alerts = () => {
           )}
         </>
       )}
+
+      <Modal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, alertId: null, deleteAll: false })}
+        type="warning"
+        title={deleteModal.deleteAll ? "Delete All Alerts" : "Delete Alert"}
+        message={deleteModal.deleteAll ? "Are you sure you want to delete all alerts? This action cannot be undone." : "Are you sure you want to delete this alert? This action cannot be undone."}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 };

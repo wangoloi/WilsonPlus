@@ -256,10 +256,12 @@ const MainApp = () => {
       {/* Sidebar Navigation */}
       <aside
         className={`${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        } fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300 ease-in-out`}
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        } fixed lg:static inset-y-0 left-0 z-50 bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out ${
+          sidebarOpen ? "w-64" : "w-0"
+        } ${sidebarOpen ? "lg:w-64" : "lg:w-0"} lg:translate-x-0 overflow-hidden lg:overflow-hidden`}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+        <div className={`flex items-center justify-between p-6 border-b border-gray-200 ${!sidebarOpen && !isMobile ? "lg:opacity-0 lg:pointer-events-none" : ""}`}>
           <div className="flex items-center space-x-3">
             <img
               src={logoImage}
@@ -272,14 +274,15 @@ const MainApp = () => {
             </div>
           </div>
           <button
-            onClick={() => setSidebarOpen(false)}
-            className="text-gray-500 lg:hidden hover:text-gray-700"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-gray-500 hover:text-gray-700 transition-colors"
+            title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
           >
-            <X className="w-5 h-5" />
+            {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className={`flex-1 p-4 space-y-2 overflow-y-auto ${!sidebarOpen && !isMobile ? "lg:opacity-0 lg:pointer-events-none" : ""}`}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -310,7 +313,7 @@ const MainApp = () => {
         </nav>
 
         {/* User Profile Section */}
-        <div className="p-4 border-t border-gray-200">
+        <div className={`p-4 border-t border-gray-200 ${!sidebarOpen && !isMobile ? "lg:opacity-0 lg:pointer-events-none" : ""}`}>
           <div className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
@@ -380,24 +383,15 @@ const MainApp = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="relative flex-1 overflow-y-auto">
-        {/* Hamburger Menu Button */}
+      <main className="relative flex-1 overflow-y-auto transition-all duration-300">
+        {/* Show floating hamburger button when sidebar is closed */}
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="fixed z-30 p-2 text-gray-700 transition-colors bg-white rounded-lg shadow-md top-4 left-4 hover:bg-gray-100"
+            className="fixed z-30 p-2 m-4 text-gray-700 transition-colors bg-white rounded-lg shadow-md hover:bg-gray-100"
+            title="Show sidebar"
           >
             <Menu className="w-6 h-6" />
-          </button>
-        )}
-
-        {/* Desktop Toggle Button (when sidebar is open) */}
-        {sidebarOpen && !isMobile && (
-          <button
-            onClick={() => setSidebarOpen(false)}
-            className="fixed z-30 p-2 text-gray-700 transition-colors bg-white rounded-lg shadow-md top-4 left-4 hover:bg-gray-100"
-          >
-            <X className="w-6 h-6" />
           </button>
         )}
 

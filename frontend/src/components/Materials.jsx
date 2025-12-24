@@ -44,8 +44,6 @@ const Materials = () => {
       if (result.success) {
         const allItems = result.data || [];
         setTotalItems(allItems.length);
-
-        // Apply pagination
         const offset = (currentPage - 1) * itemsPerPage;
         const paginatedItems = allItems.slice(offset, offset + itemsPerPage);
         setItems(paginatedItems);
@@ -63,19 +61,15 @@ const Materials = () => {
     loadQualities();
   }, [currentPage, itemsPerPage]);
 
-  // Auto-search with debounce
   useEffect(() => {
     if (!searchQuery.trim()) {
       loadInventory();
       return;
     }
-
     const timeoutId = setTimeout(() => {
       handleSearch(searchQuery);
     }, 300);
-
     return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const calculateTotal = useCallback(() => {
@@ -119,7 +113,6 @@ const Materials = () => {
       loadInventory();
       return;
     }
-
     try {
       setLoading(true);
       const result = await window.electronAPI.searchItems(query);
@@ -127,13 +120,8 @@ const Materials = () => {
         const filteredItems = result.data || [];
         setTotalItems(filteredItems.length);
         setCurrentPage(1);
-
-        // Apply pagination
         const offset = 0;
-        const paginatedItems = filteredItems.slice(
-          offset,
-          offset + itemsPerPage
-        );
+        const paginatedItems = filteredItems.slice(offset, offset + itemsPerPage);
         setItems(paginatedItems);
       }
     } catch (error) {
@@ -157,7 +145,6 @@ const Materials = () => {
       );
       return;
     }
-
     const itemTotal = parseFloat(formData.quantity) * parseFloat(formData.rate);
     const newItem = {
       name: formData.itemName,
@@ -169,13 +156,14 @@ const Materials = () => {
       quality: formData.quality,
       category: formData.category,
     };
-
     setFormItems([...formItems, newItem]);
     setFormData({
       ...formData,
       itemName: "",
       quantity: "",
       rate: "",
+      quality: "",
+      category: "",
     });
   };
 
@@ -193,19 +181,18 @@ const Materials = () => {
 
     let itemsToSubmit = [];
 
-    // If there are items in Added Items, use only those
+    // If there are items in Added Items → ONLY use those, ignore fields completely
     if (formItems.length > 0) {
       itemsToSubmit = [...formItems];
-    } 
-    // If no items in Added Items, but form fields are complete, allow direct save
+    }
+    // If no added items → allow direct save from current fields
     else if (
       formData.itemName &&
       formData.quantity &&
       formData.rate &&
       formData.category
     ) {
-      const itemTotal =
-        parseFloat(formData.quantity) * parseFloat(formData.rate);
+      const itemTotal = parseFloat(formData.quantity) * parseFloat(formData.rate);
       const currentItem = {
         name: formData.itemName,
         description: formData.itemName,
@@ -217,10 +204,12 @@ const Materials = () => {
         category: formData.category,
       };
       itemsToSubmit = [currentItem];
-    } 
-    // Otherwise, show error
-    else {
-      showAlert("warning", "Validation Error", "Please add at least one item to the Added Items list or fill in all required fields");
+    } else {
+      showAlert(
+        "warning",
+        "Validation Error",
+        "Please either add items to the list or fill all required fields for a single item."
+      );
       return;
     }
 
@@ -229,7 +218,6 @@ const Materials = () => {
       return;
     }
 
-    // Calculate total from all items
     const finalSubtotal = itemsToSubmit.reduce(
       (sum, item) => sum + (item.total || 0),
       0
@@ -250,7 +238,6 @@ const Materials = () => {
       const result = await window.electronAPI.addInvoice(invoiceData);
       if (result.success) {
         showAlert("success", "Success", "Inventory added successfully!");
-        // Reset form
         setFormData({
           invoiceNumber: "",
           vehicleNumber: "",
@@ -283,16 +270,27 @@ const Materials = () => {
     }
   };
 
-
   const handleItemNameAdd = (newName) => {
     if (newName && !itemNames.includes(newName)) {
       setItemNames([...itemNames, newName].sort());
     }
   };
 
+  const handleQualityAdd = async (newQuality) => {
+    if (newQuality && !qualityNames.includes(newQuality)) {
+      try {
+        const result = await window.electronAPI.addQuality(newQuality);
+        if (result.success) {
+          setQualityNames([...qualityNames, newQuality].sort());
+        }
+      } catch (error) {
+        console.error("Error adding quality:", error);
+      }
+    }
+  };
+
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  // Show form as separate page view
   if (showForm) {
     return (
       <div className="p-6 space-y-6">
@@ -322,9 +320,8 @@ const Materials = () => {
               ADD INVENTORY
             </h3>
           </div>
-          
-          {/* Add inventory changed to a div.. */}
-          <form onSubmit={handleSubmit}  className="p-6 space-y-6">
+
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
@@ -377,7 +374,6 @@ const Materials = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
                 />
               </div>
-
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Vehicle No:
@@ -409,16 +405,11 @@ const Materials = () => {
                   placeholder="Select or type item name"
                 />
               </div>
-
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Quantity: <span className="text-red-500">*</span>
                 </label>
                 <input
-                  // type="number"
-                  required
-                  // min="0.1"
-                  // step="0.1"
                   value={formData.quantity}
                   onChange={(e) =>
                     setFormData({ ...formData, quantity: e.target.value })
@@ -432,10 +423,6 @@ const Materials = () => {
                   Rate: <span className="text-red-500">*</span>
                 </label>
                 <input
-                  // type="number"
-                  required
-                  // min="0"
-                  // step="1"
                   value={formData.rate}
                   onChange={(e) =>
                     setFormData({ ...formData, rate: e.target.value })
@@ -443,27 +430,19 @@ const Materials = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
                 />
               </div>
-
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
                   Quality:
                 </label>
-                <input
-                  type="text"
-                  list="quality-options"
+                <QualityDropdown
+                  options={qualityNames}
                   value={formData.quality}
-                  onChange={(e) =>
-                    setFormData({ ...formData, quality: e.target.value })
+                  onChange={(value) =>
+                    setFormData({ ...formData, quality: value })
                   }
-                  placeholder="Enter or select quality"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
+                  onAddNew={handleQualityAdd}
+                  placeholder="Select or type quality"
                 />
-                <datalist id="quality-options">
-                  <option value="Premium" />
-                  <option value="Standard" />
-                  <option value="Good" />
-                  <option value="Fair" />
-                </datalist>
               </div>
 
               <div>
@@ -526,7 +505,6 @@ const Materials = () => {
                     </div>
                   ))}
                 </div>
-
                 <div className="p-4 mt-4 space-y-2 rounded-lg bg-gray-50">
                   <div className="flex justify-between pt-2 text-lg font-bold border-t">
                     <span>Total:</span>
@@ -540,15 +518,12 @@ const Materials = () => {
               <button
                 type="submit"
                 disabled={
-                  // Always require invoice number
                   !formData.invoiceNumber ||
-                  // If no items in Added Items, require all form fields to be filled
                   (formItems.length === 0 &&
                     (!formData.itemName ||
                       !formData.quantity ||
                       !formData.rate ||
                       !formData.category))
-                  // If items exist in Added Items, only invoice number is required (no form field check)
                 }
                 className="flex-1 bg-[#1b65f6] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#4a8af7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -599,7 +574,7 @@ const Materials = () => {
     );
   }
 
-  // Show inventory list view
+  // Inventory List View
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">

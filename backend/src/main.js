@@ -26,11 +26,13 @@ const AlertRepository = require("./domains/alerts/repositories/AlertRepository")
 const InventoryBatchRepository = require("./domains/inventory_batches/repositories/InventoryBatchRepository");
 const UserRepository = require("./domains/users/repositories/UserRepository");
 const QualityRepository = require("./domains/quality/repositories/QualityRepository");
+const CustomerRepository = require("./domains/customers/repositories/CustomerRepository");
 
 // Import services
 const ItemService = require("./domains/items/services/ItemService");
 const UserService = require("./domains/users/services/UserService");
 const QualityService = require("./domains/quality/services/QualityService");
+const CustomerService = require("./domains/customers/services/CustomerService");
 
 // Removed: Old NyumbaTrack helper function (not needed for inventory management)
 
@@ -44,8 +46,9 @@ let itemRepository,
   alertRepository,
   inventoryBatchRepository,
   userRepository,
-  qualityRepository;
-let itemService, userService, qualityService;
+  qualityRepository,
+  customerRepository;
+let itemService, userService, qualityService, customerService;
 
 // Window state management
 const windowStateFile = path.join(__dirname, "window-state.json");
@@ -111,6 +114,7 @@ async function initializeDatabase() {
     inventoryBatchRepository = new InventoryBatchRepository(db);
     userRepository = new UserRepository(db);
     qualityRepository = new QualityRepository(db);
+    customerRepository = new CustomerRepository(db);
     console.log("🔧 All repositories initialized");
 
     // Initialize services
@@ -118,6 +122,7 @@ async function initializeDatabase() {
     itemService = new ItemService(itemRepository, alertRepository);
     userService = new UserService(userRepository);
     qualityService = new QualityService(qualityRepository);
+    customerService = new CustomerService(customerRepository);
     console.log("🔧 All services initialized");
 
     // Set up IPC handlers AFTER repositories are initialized
@@ -226,6 +231,27 @@ function setupIPCHandlers() {
     }
   });
 
+  // Customer Management IPC handlers
+  ipcMain.handle("db-getAllCustomers", async () => {
+    try {
+      const customers = await customerService.getAllCustomers();
+      return { success: true, data: customers };
+    } catch (error) {
+      console.error("Error getting all customers:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db-addCustomer", async (event, name) => {
+    try {
+      const customerId = await customerService.addCustomer(name);
+      return { success: true, data: { id: customerId } };
+    } catch (error) {
+      console.error("Error adding customer:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   // Invoice Management IPC handlers
   ipcMain.handle("db-addInvoice", async (event, invoiceData) => {
     try {
@@ -326,7 +352,7 @@ function setupIPCHandlers() {
   // Sales Management IPC handlers
   ipcMain.handle(
     "db-addSalesTransaction",
-    async (event, salesDataArray, customTransactionNumber = null) => {
+    async (event, salesDataArray, customTransactionNumber = null, customerName = null) => {
       try {
         if (!salesDataArray || salesDataArray.length === 0) {
           return { success: false, error: "No sales data provided" };
@@ -352,6 +378,7 @@ function setupIPCHandlers() {
           date: transactionDate,
           totalAmount,
           itemCount,
+          customerName: customerName || null,
         });
 
         // Create each sale and update inventory
@@ -463,11 +490,31 @@ function setupIPCHandlers() {
         }
 
         const sales = await saleRepository.findByTransactionId(transactionId);
+        
+        // Enrich sales with batch information for profit calculation
+        const enrichedSales = await Promise.all(
+          sales.map(async (sale) => {
+            let costPrice = 0;
+            if (sale.batchId) {
+              const batch = await inventoryBatchRepository.findById(sale.batchId);
+              if (batch) {
+                costPrice = batch.rate || 0;
+              }
+            }
+            const profit = (sale.unitPrice - costPrice) * sale.quantity;
+            return {
+              ...sale,
+              costPrice,
+              profit,
+            };
+          })
+        );
+
         return {
           success: true,
           data: {
             transaction,
-            sales,
+            sales: enrichedSales,
           },
         };
       } catch (error) {
@@ -618,6 +665,26 @@ function setupIPCHandlers() {
       return { success: true, data: { count } };
     } catch (error) {
       console.error("Error marking all alerts as read:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db-deleteAlert", async (event, alertId) => {
+    try {
+      const deleted = await alertRepository.delete(alertId);
+      return { success: true, data: { deleted } };
+    } catch (error) {
+      console.error("Error deleting alert:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db-deleteAllAlerts", async () => {
+    try {
+      const count = await alertRepository.deleteAll();
+      return { success: true, data: { count } };
+    } catch (error) {
+      console.error("Error deleting all alerts:", error);
       return { success: false, error: error.message };
     }
   });

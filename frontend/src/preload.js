@@ -29,6 +29,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getAllQualities: () => ipcRenderer.invoke("db-getAllQualities"),
   addQuality: (name) => ipcRenderer.invoke("db-addQuality", name),
   
+  // Customer Management
+  getAllCustomers: () => ipcRenderer.invoke("db-getAllCustomers"),
+  addCustomer: (name) => ipcRenderer.invoke("db-addCustomer", name),
+  
   // Invoice Management
   addInvoice: (invoiceData) => ipcRenderer.invoke("db-addInvoice", invoiceData),
   getAllInvoices: () => ipcRenderer.invoke("db-getAllInvoices"),
@@ -40,7 +44,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   
   // Sales Management
   addSale: (saleData) => ipcRenderer.invoke("db-addSale", saleData),
-  addSalesTransaction: (salesDataArray, transactionNumber) => ipcRenderer.invoke("db-addSalesTransaction", salesDataArray, transactionNumber),
+  addSalesTransaction: (salesDataArray, transactionNumber, customerName) => ipcRenderer.invoke("db-addSalesTransaction", salesDataArray, transactionNumber, customerName),
   getAllSales: () => ipcRenderer.invoke("db-getAllSales"),
   getAllSalesTransactions: () => ipcRenderer.invoke("db-getAllSalesTransactions"),
   getSalesTransactionDetails: (transactionId) => ipcRenderer.invoke("db-getSalesTransactionDetails", transactionId),
@@ -53,6 +57,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getUnreadAlerts: () => ipcRenderer.invoke("db-getUnreadAlerts"),
   markAlertAsRead: (alertId) => ipcRenderer.invoke("db-markAlertAsRead", alertId),
   markAllAlertsAsRead: () => ipcRenderer.invoke("db-markAllAlertsAsRead"),
+  deleteAlert: (alertId) => ipcRenderer.invoke("db-deleteAlert", alertId),
+  deleteAllAlerts: () => ipcRenderer.invoke("db-deleteAllAlerts"),
   
   // File Operations
   openPDF: (pdfPath) => ipcRenderer.invoke("open-pdf", pdfPath),

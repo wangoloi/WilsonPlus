@@ -55,9 +55,17 @@ class DatabaseSchema {
             date DATETIME NOT NULL,
             totalAmount REAL NOT NULL,
             itemCount INTEGER NOT NULL DEFAULT 0,
+            customerName TEXT,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
           )
         `);
+
+        // Add customerName column if it doesn't exist (migration)
+        this.db.run(`
+          ALTER TABLE sales_transactions ADD COLUMN customerName TEXT
+        `, (err) => {
+          // Ignore error if column already exists
+        });
 
         // Sales table
         this.db.run(`
@@ -162,6 +170,15 @@ class DatabaseSchema {
         // Quality names table
         this.db.run(`
           CREATE TABLE IF NOT EXISTS quality_names (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+
+        // Customer names table
+        this.db.run(`
+          CREATE TABLE IF NOT EXISTS customer_names (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT UNIQUE NOT NULL,
             createdAt DATETIME DEFAULT CURRENT_TIMESTAMP

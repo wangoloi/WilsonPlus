@@ -3,6 +3,7 @@ import { X, Plus, Edit2, Trash2 } from "lucide-react";
 import Dropdown from "../shared/Dropdown";
 import Modal from "../shared/Modal";
 import CustomDatePicker from "../shared/CustomDatepicker";
+import CustomerDropdown from "../shared/CustomerDropdown";
 
 const SaleModal = ({ onClose }) => {
   const [items, setItems] = useState([]);
@@ -16,6 +17,8 @@ const SaleModal = ({ onClose }) => {
   const [saleItems, setSaleItems] = useState([]); // Cart of items to sell
   const [editingIndex, setEditingIndex] = useState(null);
   const [transactionNumber, setTransactionNumber] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerNames, setCustomerNames] = useState([]);
   const [saleDate, setSaleDate] = useState(new Date());
   const [useSystemDate, setUseSystemDate] = useState(true);
   const [alertModal, setAlertModal] = useState({
@@ -27,7 +30,32 @@ const SaleModal = ({ onClose }) => {
 
   useEffect(() => {
     loadItems();
+    loadCustomerNames();
   }, []);
+
+  const loadCustomerNames = async () => {
+    try {
+      const result = await window.electronAPI.getAllCustomers();
+      if (result.success) {
+        setCustomerNames(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error loading customer names:", error);
+    }
+  };
+
+  const handleCustomerAdd = async (newCustomer) => {
+    if (newCustomer && !customerNames.includes(newCustomer)) {
+      try {
+        const result = await window.electronAPI.addCustomer(newCustomer);
+        if (result.success) {
+          setCustomerNames([...customerNames, newCustomer].sort());
+        }
+      } catch (error) {
+        console.error("Error adding customer:", error);
+      }
+    }
+  };
 
   useEffect(() => {
     if (selectedItemId) {
@@ -218,7 +246,8 @@ const SaleModal = ({ onClose }) => {
         transactionNumber.trim() || generateDefaultTransactionNumber();
       const result = await window.electronAPI.addSalesTransaction(
         salesDataArray,
-        finalTransactionNumber
+        finalTransactionNumber,
+        customerName.trim() || null
       );
 
       if (result.success) {
@@ -300,6 +329,20 @@ const SaleModal = ({ onClose }) => {
                 </p>
               </div>
 
+              {/* Customer Name */}
+              <div>
+                <label className="block mb-1 text-sm font-medium text-gray-700">
+                  Customer Name:
+                </label>
+                <CustomerDropdown
+                  options={customerNames}
+                  value={customerName}
+                  onChange={(value) => setCustomerName(value)}
+                  onAddNew={handleCustomerAdd}
+                  placeholder="Select or type customer name (optional)"
+                />
+              </div>
+
               {/* Sale Date */}
               <div>
                 <label className="block mb-1 text-sm font-medium text-gray-700">
@@ -339,7 +382,7 @@ const SaleModal = ({ onClose }) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block mb-1 text-sm font-medium text-gray-700">
-                      Select Item: *
+                      Select Item: <span className="text-red-500">*</span>
                     </label>
                     <Dropdown
                       options={itemDropdownOptions}
@@ -357,7 +400,7 @@ const SaleModal = ({ onClose }) => {
                   {selectedItemId && (
                     <div>
                       <label className="block mb-1 text-sm font-medium text-gray-700">
-                        Select Batch: *
+                        Select Batch: <span className="text-red-500">*</span>
                       </label>
                       {loadingBatches ? (
                         <div className="py-4 text-center">
@@ -390,7 +433,7 @@ const SaleModal = ({ onClose }) => {
                     <>
                       <div>
                         <label className="block mb-1 text-sm font-medium text-gray-700">
-                          Quantity: *
+                          Quantity: <span className="text-red-500">*</span>
                         </label>
                         <input
                           // type="number"
@@ -409,7 +452,7 @@ const SaleModal = ({ onClose }) => {
 
                       <div>
                         <label className="block mb-1 text-sm font-medium text-gray-700">
-                          Selling Price (per unit): *
+                          Selling Price (per unit): <span className="text-red-500">*</span>
                         </label>
                         <input
                           // type="number"

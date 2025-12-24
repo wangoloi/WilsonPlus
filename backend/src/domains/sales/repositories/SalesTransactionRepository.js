@@ -6,8 +6,8 @@ class SalesTransactionRepository {
   async create(transactionData) {
     return new Promise((resolve, reject) => {
       const sql = `
-        INSERT INTO sales_transactions (transactionNumber, date, totalAmount, itemCount)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO sales_transactions (transactionNumber, date, totalAmount, itemCount, customerName)
+        VALUES (?, ?, ?, ?, ?)
       `;
 
       this.db.run(
@@ -17,6 +17,7 @@ class SalesTransactionRepository {
           transactionData.date,
           transactionData.totalAmount,
           transactionData.itemCount,
+          transactionData.customerName || null,
         ],
         function (err) {
           if (err) {

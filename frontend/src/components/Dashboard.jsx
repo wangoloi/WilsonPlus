@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { BarChart3, Package, AlertTriangle, DollarSign, TrendingUp, X, Calendar } from "lucide-react";
+import { BarChart3, Package, AlertTriangle, TrendingUp, X, Calendar, Coins } from "lucide-react";
 import CustomDatePicker from "../shared/CustomDatepicker";
 import DataTable from "../shared/DataTable";
 
@@ -155,7 +155,7 @@ const Dashboard = () => {
               <h3 className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalValue)}</h3>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-green-600" />
+              <Coins className="w-6 h-6 text-green-600" />
             </div>
           </div>
         </div>
