@@ -131,6 +131,22 @@ class InventoryBatchRepository {
       );
     });
   }
+
+  async delete(id) {
+    return new Promise((resolve, reject) => {
+      this.db.run(
+        "DELETE FROM inventory_batches WHERE id = ?",
+        [id],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.changes > 0);
+          }
+        }
+      );
+    });
+  }
 }
 
 module.exports = InventoryBatchRepository;

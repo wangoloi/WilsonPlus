@@ -8,7 +8,6 @@ import DataTable from "../shared/DataTable";
 const Sales = () => {
   const [transactions, setTransactions] = useState([]);
   const [allTransactions, setAllTransactions] = useState([]);
-  const [filteredTransactions, setFilteredTransactions] = useState([]); // For search results
   const [loading, setLoading] = useState(true);
   const [showSaleModal, setShowSaleModal] = useState(false);
   const [dateFrom, setDateFrom] = useState(null);
@@ -25,16 +24,6 @@ const Sales = () => {
   useEffect(() => {
     loadTransactions();
   }, [currentPage, itemsPerPage]);
-
-  // Handle pagination for filtered transactions
-  useEffect(() => {
-    if (filteredTransactions.length > 0 || allTransactions.length > 0) {
-      const source = filteredTransactions.length > 0 ? filteredTransactions : allTransactions;
-      const offset = (currentPage - 1) * itemsPerPage;
-      const paginatedTransactions = source.slice(offset, offset + itemsPerPage);
-      setTransactions(paginatedTransactions);
-    }
-  }, [currentPage, itemsPerPage, filteredTransactions, allTransactions]);
 
   // Auto-search with debounce
   useEffect(() => {
@@ -58,7 +47,6 @@ const Sales = () => {
       if (result.success) {
         const all = result.data || [];
         setAllTransactions(all);
-        setFilteredTransactions(all);
         
         // Apply search if there's a query
         if (searchQuery.trim()) {
@@ -80,11 +68,12 @@ const Sales = () => {
 
   const handleSearch = (query = searchQuery) => {
     if (!query || !query.trim()) {
-      // Reload all transactions
-      const offset = (currentPage - 1) * itemsPerPage;
+      // Clear search - show all transactions
+      setTotalItems(allTransactions.length);
+      setCurrentPage(1);
+      const offset = 0;
       const paginatedTransactions = allTransactions.slice(offset, offset + itemsPerPage);
       setTransactions(paginatedTransactions);
-      setTotalItems(allTransactions.length);
       return;
     }
 
@@ -136,14 +125,12 @@ const Sales = () => {
             const customerName = (transaction.customerName || "").toLowerCase();
             return transactionNumber.includes(searchTerm) || customerName.includes(searchTerm);
           });
-          setFilteredTransactions(searchFiltered);
           setTotalItems(searchFiltered.length);
           setCurrentPage(1);
           const offset = 0;
           const paginatedTransactions = searchFiltered.slice(offset, offset + itemsPerPage);
           setTransactions(paginatedTransactions);
         } else {
-          setFilteredTransactions(filteredTransactions);
           setTotalItems(filteredTransactions.length);
           setCurrentPage(1);
           // Apply pagination
@@ -349,8 +336,8 @@ const Sales = () => {
         );
       }
 
-      // Use filtered transactions for PDF (or allTransactions if no filter/search)
-      const transactionsForPDF = filteredTransactions.length > 0 ? filteredTransactions : allTransactions;
+      // Use allTransactions for PDF (they're already filtered by date if filter was applied)
+      const transactionsForPDF = allTransactions;
       
       // Prepare table data
       const tableData = transactionsForPDF.map((transaction) => [

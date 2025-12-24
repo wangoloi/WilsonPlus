@@ -37,6 +37,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   addInvoice: (invoiceData) => ipcRenderer.invoke("db-addInvoice", invoiceData),
   getAllInvoices: () => ipcRenderer.invoke("db-getAllInvoices"),
   getInvoice: (id) => ipcRenderer.invoke("db-getInvoice", id),
+  canEditInvoice: (id) => ipcRenderer.invoke("db-canEditInvoice", id),
+  updateInvoice: (id, invoiceData) => ipcRenderer.invoke("db-updateInvoice", id, invoiceData),
   deleteInvoice: (id) => ipcRenderer.invoke("db-deleteInvoice", id),
   
   // Inventory Batch Management

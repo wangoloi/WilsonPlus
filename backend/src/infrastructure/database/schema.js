@@ -61,11 +61,14 @@ class DatabaseSchema {
         `);
 
         // Add customerName column if it doesn't exist (migration)
-        this.db.run(`
+        this.db.run(
+          `
           ALTER TABLE sales_transactions ADD COLUMN customerName TEXT
-        `, (err) => {
-          // Ignore error if column already exists
-        });
+        `,
+          (err) => {
+            // Ignore error if column already exists
+          }
+        );
 
         // Sales table
         this.db.run(`

@@ -27,6 +27,13 @@ const SaleModal = ({ onClose }) => {
     title: "",
     message: "",
   });
+  const [priceWarningModal, setPriceWarningModal] = useState({
+    isOpen: false,
+    buyingPrice: 0,
+    sellingPrice: 0,
+    itemName: "",
+    onConfirm: null,
+  });
 
   useEffect(() => {
     loadItems();
@@ -135,11 +142,20 @@ const SaleModal = ({ onClose }) => {
       return;
     }
 
-    if (parseFloat(quantity) > selectedBatchData.availableQuantity) {
+    // Calculate adjusted available quantity (accounting for items already in cart)
+    const quantityInCart = getQuantityInCartForBatch(selectedBatchData.id);
+    let adjustedAvailable = selectedBatchData.availableQuantity - quantityInCart;
+    
+    // If editing, exclude the current item being edited from the calculation
+    if (editingIndex !== null && saleItems[editingIndex]?.batchId === selectedBatchData.id) {
+      adjustedAvailable += saleItems[editingIndex].quantity;
+    }
+
+    if (parseFloat(quantity) > adjustedAvailable) {
       showAlert(
         "error",
         "Insufficient Stock",
-        `The requested quantity exceeds available stock in this batch. Available: ${selectedBatchData.availableQuantity}`
+        `The requested quantity exceeds available stock in this batch. Available: ${adjustedAvailable}`
       );
       return;
     }
@@ -149,6 +165,57 @@ const SaleModal = ({ onClose }) => {
       return;
     }
 
+    const buyingPrice = selectedBatchData.rate || 0;
+    const sellingPriceValue = parseFloat(sellingPrice);
+
+    // Check if selling price is less than or equal to buying price
+    if (sellingPriceValue <= buyingPrice) {
+      setPriceWarningModal({
+        isOpen: true,
+        buyingPrice: buyingPrice,
+        sellingPrice: sellingPriceValue,
+        itemName: selectedItemData.name,
+        onConfirm: () => {
+          // Proceed with adding item after confirmation
+          const itemTotal = parseFloat(quantity) * parseFloat(sellingPrice);
+
+          const saleItem = {
+            itemId: selectedItemData.id,
+            batchId: selectedBatchData.id,
+            itemName: selectedItemData.name,
+            batchInfo: {
+              purchaseDate: selectedBatchData.purchaseDate,
+              availableQuantity: selectedBatchData.availableQuantity,
+              purchaseRate: selectedBatchData.rate,
+              invoiceNumber: selectedBatchData.invoiceNumber,
+            },
+            quantity: parseFloat(quantity),
+            unitPrice: parseFloat(sellingPrice),
+            total: itemTotal,
+          };
+
+          if (editingIndex !== null) {
+            // Update existing item
+            const updated = [...saleItems];
+            updated[editingIndex] = saleItem;
+            setSaleItems(updated);
+            setEditingIndex(null);
+          } else {
+            // Add new item
+            setSaleItems([...saleItems, saleItem]);
+          }
+
+          // Reset form
+          setSelectedItemId("");
+          setSelectedBatch("");
+          setQuantity("");
+          setSellingPrice("");
+        },
+      });
+      return;
+    }
+
+    // If price is fine, proceed directly
     const itemTotal = parseFloat(quantity) * parseFloat(sellingPrice);
 
     const saleItem = {
@@ -276,16 +343,35 @@ const SaleModal = ({ onClose }) => {
     })),
   ];
 
+  // Calculate how much quantity is already in cart for each batch
+  const getQuantityInCartForBatch = (batchId) => {
+    return saleItems
+      .filter((item) => item.batchId === batchId)
+      .reduce((sum, item) => sum + item.quantity, 0);
+  };
+
+  // Calculate adjusted available quantity (original - quantity in cart)
+  const getAdjustedAvailableQuantity = (batch) => {
+    const quantityInCart = getQuantityInCartForBatch(batch.id);
+    // If editing, exclude the current item being edited
+    if (editingIndex !== null && saleItems[editingIndex]?.batchId === batch.id) {
+      const currentItemQuantity = saleItems[editingIndex].quantity;
+      return batch.availableQuantity - quantityInCart + currentItemQuantity;
+    }
+    return batch.availableQuantity - quantityInCart;
+  };
+
   const batchDropdownOptions = [
     { value: "", label: "Select a batch" },
-    ...availableBatches.map((batch) => ({
-      value: batch.id.toString(),
-      label: `Date: ${new Date(
-        batch.purchaseDate
-      ).toLocaleDateString()} - Qty: ${
-        batch.availableQuantity
-      } - Rate: UGX ${batch.rate?.toLocaleString()}`,
-    })),
+    ...availableBatches.map((batch) => {
+      const adjustedAvailable = getAdjustedAvailableQuantity(batch);
+      return {
+        value: batch.id.toString(),
+        label: `Date: ${new Date(
+          batch.purchaseDate
+        ).toLocaleDateString()} - Available: ${adjustedAvailable} - Rate: UGX ${batch.rate?.toLocaleString()}`,
+      };
+    }),
   ];
 
   const total = calculateTotal();
@@ -312,35 +398,37 @@ const SaleModal = ({ onClose }) => {
             </div>
           ) : (
             <>
-              {/* Transaction Number */}
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Transaction Number:
-                </label>
-                <input
-                  type="text"
-                  value={transactionNumber}
-                  onChange={(e) => setTransactionNumber(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
-                  placeholder="Enter transaction number (optional)"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Default value is auto-generated, but you can change it
-                </p>
-              </div>
+              <div className="flex justify-between w-full space-x-2">
+                {/* Transaction Number */}
+                <div className="w-full">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Transaction Number:
+                  </label>
+                  <input
+                    type="text"
+                    value={transactionNumber}
+                    onChange={(e) => setTransactionNumber(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
+                    placeholder="Enter transaction number (optional)"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Default value is auto-generated, but you can change it
+                  </p>
+                </div>
 
-              {/* Customer Name */}
-              <div>
-                <label className="block mb-1 text-sm font-medium text-gray-700">
-                  Customer Name:
-                </label>
-                <CustomerDropdown
-                  options={customerNames}
-                  value={customerName}
-                  onChange={(value) => setCustomerName(value)}
-                  onAddNew={handleCustomerAdd}
-                  placeholder="Select or type customer name (optional)"
-                />
+                {/* Customer Name */}
+                <div className="w-full">
+                  <label className="block mb-1 text-sm font-medium text-gray-700">
+                    Customer Name:
+                  </label>
+                  <CustomerDropdown
+                    options={customerNames}
+                    value={customerName}
+                    onChange={(value) => setCustomerName(value)}
+                    onAddNew={handleCustomerAdd}
+                    placeholder="Select or type customer name (optional)"
+                  />
+                </div>
               </div>
 
               {/* Sale Date */}
@@ -452,7 +540,8 @@ const SaleModal = ({ onClose }) => {
 
                       <div>
                         <label className="block mb-1 text-sm font-medium text-gray-700">
-                          Selling Price (per unit): <span className="text-red-500">*</span>
+                          Selling Price (per unit):{" "}
+                          <span className="text-red-500">*</span>
                         </label>
                         <input
                           // type="number"
@@ -636,6 +725,47 @@ const SaleModal = ({ onClose }) => {
         message={alertModal.message}
         confirmText="OK"
         showCancel={false}
+      />
+
+      {/* Price Warning Modal */}
+      <Modal
+        isOpen={priceWarningModal.isOpen}
+        onClose={() =>
+          setPriceWarningModal({
+            isOpen: false,
+            buyingPrice: 0,
+            sellingPrice: 0,
+            itemName: "",
+            onConfirm: null,
+          })
+        }
+        onConfirm={() => {
+          if (priceWarningModal.onConfirm) {
+            priceWarningModal.onConfirm();
+          }
+          setPriceWarningModal({
+            isOpen: false,
+            buyingPrice: 0,
+            sellingPrice: 0,
+            itemName: "",
+            onConfirm: null,
+          });
+        }}
+        type="warning"
+        title="Price Warning"
+        message={`You are selling "${
+          priceWarningModal.itemName
+        }" at UGX ${priceWarningModal.sellingPrice?.toLocaleString()} which is ${
+          priceWarningModal.sellingPrice < priceWarningModal.buyingPrice
+            ? "less than"
+            : "equal to"
+        } the buying price of UGX ${priceWarningModal.buyingPrice?.toLocaleString()}. This will result in ${
+          priceWarningModal.sellingPrice < priceWarningModal.buyingPrice
+            ? "a loss"
+            : "no profit"
+        }. Do you want to continue?`}
+        confirmText="Continue"
+        cancelText="Cancel"
       />
     </div>
   );

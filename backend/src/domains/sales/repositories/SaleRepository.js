@@ -106,6 +106,26 @@ class SaleRepository {
       );
     });
   }
+
+  async hasSalesForBatches(batchIds) {
+    return new Promise((resolve, reject) => {
+      if (!batchIds || batchIds.length === 0) {
+        resolve(false);
+        return;
+      }
+      
+      const placeholders = batchIds.map(() => "?").join(",");
+      const sql = `SELECT COUNT(*) as count FROM sales WHERE batchId IN (${placeholders})`;
+      
+      this.db.get(sql, batchIds, (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve((row?.count || 0) > 0);
+        }
+      });
+    });
+  }
 }
 
 module.exports = SaleRepository;

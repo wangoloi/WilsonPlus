@@ -339,8 +339,147 @@ function setupIPCHandlers() {
     }
   });
 
+  ipcMain.handle("db-canEditInvoice", async (event, id) => {
+    try {
+      // Get all batches for this invoice
+      const batches = await inventoryBatchRepository.findByInvoiceId(id);
+      if (!batches || batches.length === 0) {
+        return { success: true, canEdit: true };
+      }
+
+      const batchIds = batches.map((b) => b.id);
+      const hasSales = await saleRepository.hasSalesForBatches(batchIds);
+
+      return { success: true, canEdit: !hasSales };
+    } catch (error) {
+      console.error("Error checking if invoice can be edited:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db-updateInvoice", async (event, id, invoiceData) => {
+    try {
+      // Check if invoice can be edited
+      const batches = await inventoryBatchRepository.findByInvoiceId(id);
+      if (batches && batches.length > 0) {
+        const batchIds = batches.map((b) => b.id);
+        const hasSales = await saleRepository.hasSalesForBatches(batchIds);
+        if (hasSales) {
+          return {
+            success: false,
+            error: "Cannot edit invoice: Some batches from this invoice have been sold",
+          };
+        }
+      }
+
+      // Get old invoice data to calculate stock changes
+      const oldInvoice = await invoiceRepository.findById(id);
+      if (!oldInvoice) {
+        return { success: false, error: "Invoice not found" };
+      }
+
+      const oldBatches = await inventoryBatchRepository.findByInvoiceId(id);
+      const purchaseDate = invoiceData.date || new Date().toISOString();
+
+      // Update invoice
+      await invoiceRepository.update(id, invoiceData);
+
+      // Update inventory batches and items
+      // First, revert old stock changes
+      for (const oldBatch of oldBatches || []) {
+        if (oldBatch.itemId) {
+          const item = await itemService.getItem(oldBatch.itemId);
+          if (item) {
+            // Revert the stock that was added from this batch
+            const newStock = item.stock - oldBatch.quantity;
+            await itemService.updateStock(oldBatch.itemId, newStock);
+          }
+        }
+      }
+
+      // Delete old batches (they will be recreated with new data)
+      for (const oldBatch of oldBatches || []) {
+        await inventoryBatchRepository.delete(oldBatch.id);
+      }
+
+      // Create new batches and update items
+      if (invoiceData.items && Array.isArray(invoiceData.items)) {
+        for (const item of invoiceData.items) {
+          // Update inventory
+          await itemService.createOrUpdateItemByName({
+            name: item.name || item.description,
+            category: item.category,
+            stock: item.quantity || 0,
+            price: item.rate || item.unitPrice || 0,
+            cost: item.rate || item.unitPrice || 0,
+            quality: item.quality,
+            invoiceNumber: invoiceData.invoiceNumber,
+            vehicleNumber: invoiceData.vehicleNumber,
+            minStock: 0,
+          });
+
+          // Get the item ID after creating/updating
+          const actualItem = await itemService.getItemByName(
+            item.name || item.description
+          );
+
+          // Create inventory batch record
+          const itemQuantity = item.quantity || 0;
+          await inventoryBatchRepository.create({
+            itemId: actualItem ? actualItem.id : null,
+            invoiceId: id,
+            invoiceNumber: invoiceData.invoiceNumber,
+            itemName: item.name || item.description,
+            category: item.category,
+            quantity: itemQuantity,
+            availableQuantity: itemQuantity,
+            rate: item.rate || item.unitPrice || 0,
+            total:
+              item.total || itemQuantity * (item.rate || item.unitPrice || 0),
+            quality: item.quality,
+            vehicleNumber: invoiceData.vehicleNumber,
+            purchaseDate: purchaseDate,
+          });
+        }
+      }
+
+      return { success: true, data: { id } };
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("db-deleteInvoice", async (event, id) => {
     try {
+      // Check if invoice can be deleted
+      const batches = await inventoryBatchRepository.findByInvoiceId(id);
+      if (batches && batches.length > 0) {
+        const batchIds = batches.map((b) => b.id);
+        const hasSales = await saleRepository.hasSalesForBatches(batchIds);
+        if (hasSales) {
+          return {
+            success: false,
+            error: "Cannot delete invoice: Some batches from this invoice have been sold",
+          };
+        }
+      }
+
+      // Revert inventory changes before deleting
+      if (batches && batches.length > 0) {
+        for (const batch of batches) {
+          if (batch.itemId) {
+            const item = await itemService.getItem(batch.itemId);
+            if (item) {
+              // Revert the stock that was added from this batch
+              const newStock = item.stock - batch.quantity;
+              await itemService.updateStock(batch.itemId, newStock);
+            }
+          }
+        }
+      }
+
+      // Delete invoice (cascade will delete batches)
       const deleted = await invoiceRepository.delete(id);
       return { success: true, data: { deleted } };
     } catch (error) {

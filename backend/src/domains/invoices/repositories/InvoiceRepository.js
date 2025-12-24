@@ -72,6 +72,46 @@ class InvoiceRepository {
     });
   }
 
+  async update(id, invoiceData) {
+    return new Promise((resolve, reject) => {
+      const itemsJson = Array.isArray(invoiceData.items)
+        ? JSON.stringify(invoiceData.items)
+        : JSON.stringify([]);
+
+      const dateValue =
+        typeof invoiceData.date === "string"
+          ? invoiceData.date
+          : invoiceData.date instanceof Date
+            ? invoiceData.date.toISOString()
+            : new Date().toISOString();
+
+      const sql = `
+        UPDATE invoices 
+        SET invoiceNumber = ?, date = ?, items = ?, subtotal = ?, total = ?
+        WHERE id = ?
+      `;
+
+      this.db.run(
+        sql,
+        [
+          invoiceData.invoiceNumber || "",
+          dateValue,
+          itemsJson,
+          invoiceData.subtotal || 0,
+          invoiceData.total || 0,
+          id,
+        ],
+        function (err) {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(this.changes > 0);
+          }
+        }
+      );
+    });
+  }
+
   async delete(id) {
     return new Promise((resolve, reject) => {
       this.db.run("DELETE FROM invoices WHERE id = ?", [id], function (err) {
