@@ -44,6 +44,10 @@ const ItemNameDropdown = ({
   const filteredOptions = options.filter((opt) =>
     String(opt).toLowerCase().includes(normalizedSearchTerm)
   );
+  // Limit visible options to 100 for performance (with 1000+ items)
+  const MAX_VISIBLE_OPTIONS = 100;
+  const visibleOptions = filteredOptions.slice(0, MAX_VISIBLE_OPTIONS);
+  const hasMoreOptions = filteredOptions.length > MAX_VISIBLE_OPTIONS;
   const hasExactMatch = options.some(
     (opt) => opt.toLowerCase() === normalizedSearchTerm
   );
@@ -195,25 +199,32 @@ const ItemNameDropdown = ({
               }}
             >
               <div className="overflow-y-auto" style={{ maxHeight: "200px" }}>
-                {filteredOptions.length > 0 ? (
-                  filteredOptions.map((option, index) => (
-                    <button
-                      type="button"
-                      key={option}
-                      onClick={() => handleSelect(option)}
-                      className={`w-full flex items-center justify-between px-3 py-2 text-left
-                        hover:bg-gray-50 transition-colors duration-300
-                        ${
-                          value === option
-                            ? "bg-[#1b65f6]/5 text-[#1b65f6]"
-                            : "text-gray-900"
-                        }
-                        ${index === 0 ? "rounded-t-lg" : ""}
-                      `}
-                    >
-                      <span className="truncate">{option}</span>
-                    </button>
-                  ))
+                {visibleOptions.length > 0 ? (
+                  <>
+                    {visibleOptions.map((option, index) => (
+                      <button
+                        type="button"
+                        key={option}
+                        onClick={() => handleSelect(option)}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-left
+                          hover:bg-gray-50 transition-colors duration-300
+                          ${
+                            value === option
+                              ? "bg-[#1b65f6]/5 text-[#1b65f6]"
+                              : "text-gray-900"
+                          }
+                          ${index === 0 ? "rounded-t-lg" : ""}
+                        `}
+                      >
+                        <span className="truncate">{option}</span>
+                      </button>
+                    ))}
+                    {hasMoreOptions && (
+                      <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200 bg-gray-50">
+                        Showing {MAX_VISIBLE_OPTIONS} of {filteredOptions.length} results. Type to filter more.
+                      </div>
+                    )}
+                  </>
                 ) : null}
                 {showAddNew && (
                   <button

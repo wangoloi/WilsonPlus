@@ -6,6 +6,7 @@ import CustomDatePicker from "../shared/CustomDatepicker";
 import ItemNameDropdown from "../shared/ItemNameDropdown";
 import QualityDropdown from "../shared/QualityDropdown";
 import Dropdown from "../shared/Dropdown";
+import logoImage from "../assets/images/wilsonPlus_Logo2.png";
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -213,32 +214,49 @@ const Invoices = () => {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
 
-      // Header
+      // Load and add logo on the left
+      try {
+        const img = new Image();
+        img.src = logoImage;
+        await new Promise((resolve) => {
+          img.onload = () => {
+            const logoWidth = 30;
+            const logoHeight = (img.height / img.width) * logoWidth;
+            doc.addImage(img, "PNG", 14, 10, logoWidth, logoHeight);
+            resolve();
+          };
+          img.onerror = resolve; // Continue even if image fails to load
+        });
+      } catch (error) {
+        console.error("Error loading logo:", error);
+      }
+
+      // Header text (on the right of logo)
       doc.setFontSize(20);
       doc.setTextColor(27, 101, 246);
-      doc.text("WilsonPlus", pageWidth / 2, 20, { align: "center" });
+      doc.text("WilsonPlus", 50, 25, { align: "left" });
 
       doc.setFontSize(16);
       doc.setTextColor(0, 0, 0);
-      doc.text("Purchase Invoice", pageWidth / 2, 35, { align: "center" });
+      doc.text("Purchase Invoice", 50, 40, { align: "left" });
 
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
       doc.text(
         `Invoice #: ${selectedInvoice.invoiceNumber}`,
         14,
-        50
+        55
       );
       doc.text(
         `Date: ${selectedInvoice.date ? new Date(selectedInvoice.date).toLocaleDateString() : "-"}`,
         14,
-        57
+        62
       );
       if (selectedInvoice.batches?.[0]?.vehicleNumber) {
         doc.text(
           `Vehicle #: ${selectedInvoice.batches[0].vehicleNumber}`,
           14,
-          64
+          69
         );
       }
 
@@ -254,7 +272,7 @@ const Invoices = () => {
       autoTable.default(doc, {
         head: [["Item Name", "Quantity", "Unit Price", "Total"]],
         body: tableData,
-        startY: selectedInvoice.batches?.[0]?.vehicleNumber ? 72 : 65,
+        startY: selectedInvoice.batches?.[0]?.vehicleNumber ? 77 : 70,
         styles: {
           headStyles: { fillColor: [27, 101, 246] },
           fontSize: 9,
@@ -327,17 +345,17 @@ const Invoices = () => {
       doc.setTextColor(100, 100, 100);
       doc.text(
         `Generated on: ${new Date().toLocaleDateString()}`,
-        pageWidth / 2,
-        45,
-        { align: "center" }
+        14,
+        55,
+        { align: "left" }
       );
 
       if (dateFrom && dateTo) {
         doc.text(
           `Period: ${dateFrom.toLocaleDateString()} - ${dateTo.toLocaleDateString()}`,
-          pageWidth / 2,
-          52,
-          { align: "center" }
+          14,
+          62,
+          { align: "left" }
         );
       }
 
@@ -353,7 +371,7 @@ const Invoices = () => {
       autoTable.default(doc, {
         head: [["Invoice #", "Date", "Items", "Total Amount"]],
         body: tableData,
-        startY: 60,
+        startY: dateFrom && dateTo ? 70 : 63,
         styles: {
           headStyles: { fillColor: [27, 101, 246] },
           fontSize: 9,

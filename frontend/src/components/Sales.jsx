@@ -4,6 +4,7 @@ import SaleModal from "./SaleModal";
 import CustomDatePicker from "../shared/CustomDatepicker";
 import Modal from "../shared/Modal";
 import DataTable from "../shared/DataTable";
+import logoImage from "../assets/images/wilsonPlus_Logo2.png";
 
 const Sales = () => {
   const [transactions, setTransactions] = useState([]);
@@ -201,32 +202,49 @@ const Sales = () => {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
 
-      // Header
+      // Load and add logo on the left
+      try {
+        const img = new Image();
+        img.src = logoImage;
+        await new Promise((resolve) => {
+          img.onload = () => {
+            const logoWidth = 30;
+            const logoHeight = (img.height / img.width) * logoWidth;
+            doc.addImage(img, "PNG", 14, 10, logoWidth, logoHeight);
+            resolve();
+          };
+          img.onerror = resolve; // Continue even if image fails to load
+        });
+      } catch (error) {
+        console.error("Error loading logo:", error);
+      }
+
+      // Header text (on the right of logo)
       doc.setFontSize(20);
       doc.setTextColor(27, 101, 246);
-      doc.text("WilsonPlus", pageWidth / 2, 20, { align: "center" });
+      doc.text("WilsonPlus", 50, 25, { align: "left" });
 
       doc.setFontSize(16);
       doc.setTextColor(0, 0, 0);
-      doc.text("Sale Transaction Details", pageWidth / 2, 35, { align: "center" });
+      doc.text("Sale Transaction Details", 50, 40, { align: "left" });
 
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
       doc.text(
         `Transaction #: ${transactionDetails.transaction.transactionNumber}`,
         14,
-        50
+        55
       );
       doc.text(
         `Date: ${transactionDetails.transaction.date ? new Date(transactionDetails.transaction.date).toLocaleDateString() : "-"}`,
         14,
-        57
+        62
       );
       if (transactionDetails.transaction.customerName) {
         doc.text(
           `Customer: ${transactionDetails.transaction.customerName}`,
           14,
-          64
+          69
         );
       }
 
@@ -243,7 +261,7 @@ const Sales = () => {
       autoTable.default(doc, {
         head: [["Item Name", "Quantity", "Unit Price", "Total", "Profit"]],
         body: tableData,
-        startY: transactionDetails.transaction.customerName ? 72 : 65,
+        startY: transactionDetails.transaction.customerName ? 77 : 70,
         styles: {
           headStyles: { fillColor: [27, 101, 246] },
           fontSize: 9,
@@ -322,17 +340,17 @@ const Sales = () => {
       doc.setTextColor(100, 100, 100);
       doc.text(
         `Generated on: ${new Date().toLocaleDateString()}`,
-        pageWidth / 2,
-        45,
-        { align: "center" }
+        14,
+        55,
+        { align: "left" }
       );
 
       if (dateFrom && dateTo) {
         doc.text(
           `Period: ${dateFrom.toLocaleDateString()} - ${dateTo.toLocaleDateString()}`,
-          pageWidth / 2,
-          52,
-          { align: "center" }
+          14,
+          62,
+          { align: "left" }
         );
       }
 
@@ -354,7 +372,7 @@ const Sales = () => {
       autoTable.default(doc, {
         head: [["Transaction #", "Date", "Customer", "Items", "Total Amount"]],
         body: tableData,
-        startY: 60,
+        startY: dateFrom && dateTo ? 70 : 63,
         styles: {
           headStyles: { fillColor: [27, 101, 246] },
           fontSize: 9,

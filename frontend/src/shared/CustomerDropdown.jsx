@@ -44,6 +44,10 @@ const CustomerDropdown = ({
   const filteredOptions = options.filter((opt) =>
     String(opt).toLowerCase().includes(normalizedSearchTerm)
   );
+  // Limit visible options to 100 for performance (with 1000+ items)
+  const MAX_VISIBLE_OPTIONS = 100;
+  const visibleOptions = filteredOptions.slice(0, MAX_VISIBLE_OPTIONS);
+  const hasMoreOptions = filteredOptions.length > MAX_VISIBLE_OPTIONS;
   const hasExactMatch = options.some(
     (opt) => opt.toLowerCase() === normalizedSearchTerm
   );
@@ -196,8 +200,9 @@ const CustomerDropdown = ({
               }}
             >
               <div className="overflow-y-auto" style={{ maxHeight: "200px" }}>
-                {filteredOptions.length > 0
-                  ? filteredOptions.map((option, index) => (
+                {visibleOptions.length > 0 ? (
+                  <>
+                    {visibleOptions.map((option, index) => (
                       <button
                         type="button"
                         key={option}
@@ -214,8 +219,14 @@ const CustomerDropdown = ({
                       >
                         <span className="truncate">{option}</span>
                       </button>
-                    ))
-                  : null}
+                    ))}
+                    {hasMoreOptions && (
+                      <div className="px-3 py-2 text-xs text-gray-500 border-t border-gray-200 bg-gray-50">
+                        Showing {MAX_VISIBLE_OPTIONS} of {filteredOptions.length} results. Type to filter more.
+                      </div>
+                    )}
+                  </>
+                ) : null}
                 {showAddNew && (
                   <button
                     type="button"
