@@ -1,5 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Eye, Trash2, X, Filter, Printer, Search, Edit, Save } from "lucide-react";
+import {
+  Eye,
+  Trash2,
+  X,
+  Filter,
+  Printer,
+  Search,
+  Edit,
+  Save,
+} from "lucide-react";
 import Modal from "../shared/Modal";
 import DataTable from "../shared/DataTable";
 import CustomDatePicker from "../shared/CustomDatepicker";
@@ -21,6 +30,11 @@ const Invoices = () => {
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
     invoiceId: null,
+  });
+  const [infoModal, setInfoModal] = useState({
+    isOpen: false,
+    type: "info", // 'info', 'success', 'error'
+    message: "",
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
@@ -54,7 +68,31 @@ const Invoices = () => {
 
   useEffect(() => {
     loadInvoices();
+    loadItemNames();
+    loadQualities();
   }, [loadInvoices]);
+
+  const loadItemNames = async () => {
+    try {
+      const result = await window.electronAPI.getUniqueItemNames();
+      if (result.success) {
+        setItemNames(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error loading item names:", error);
+    }
+  };
+
+  const loadQualities = async () => {
+    try {
+      const result = await window.electronAPI.getAllQualities();
+      if (result.success) {
+        setQualityNames(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error loading qualities:", error);
+    }
+  };
 
   const applyFilters = useCallback(() => {
     let filtered = [...originalInvoices];
@@ -118,12 +156,25 @@ const Invoices = () => {
           loadInvoices();
           setSelectedInvoice(null);
           setIsEditing(false);
+          setInfoModal({
+            isOpen: true,
+            type: "success",
+            message: "Invoice deleted successfully",
+          });
         } else {
-          alert(result.error || "Failed to delete invoice");
+          setInfoModal({
+            isOpen: true,
+            type: "error",
+            message: result.error || "Failed to delete invoice",
+          });
         }
       } catch (error) {
         console.error("Error deleting invoice:", error);
-        alert("Error deleting invoice");
+        setInfoModal({
+          isOpen: true,
+          type: "error",
+          message: "Error deleting invoice",
+        });
       }
     }
     setConfirmModal({ isOpen: false, invoiceId: null });
@@ -135,7 +186,9 @@ const Invoices = () => {
       if (result.success) {
         setSelectedInvoice(result.data);
         // Check if invoice can be edited
-        const canEditResult = await window.electronAPI.canEditInvoice(invoice.id);
+        const canEditResult = await window.electronAPI.canEditInvoice(
+          invoice.id
+        );
         if (canEditResult.success) {
           setCanEditInvoice(canEditResult.canEdit);
         }
@@ -155,18 +208,21 @@ const Invoices = () => {
     if (selectedInvoice) {
       setEditFormData({
         invoiceNumber: selectedInvoice.invoiceNumber || "",
-        date: selectedInvoice.date ? new Date(selectedInvoice.date) : new Date(),
+        date: selectedInvoice.date
+          ? new Date(selectedInvoice.date)
+          : new Date(),
         vehicleNumber: selectedInvoice.batches?.[0]?.vehicleNumber || "",
-        items: selectedInvoice.items?.map(item => ({
-          name: item.name || item.description,
-          description: item.name || item.description,
-          quantity: item.quantity || 0,
-          rate: item.rate || item.unitPrice || 0,
-          unitPrice: item.rate || item.unitPrice || 0,
-          total: item.total || 0,
-          quality: item.quality || "",
-          category: item.category || "",
-        })) || [],
+        items:
+          selectedInvoice.items?.map((item) => ({
+            name: item.name || item.description,
+            description: item.name || item.description,
+            quantity: item.quantity || 0,
+            rate: item.rate || item.unitPrice || 0,
+            unitPrice: item.rate || item.unitPrice || 0,
+            total: item.total || 0,
+            quality: item.quality || "",
+            category: item.category || "",
+          })) || [],
       });
       setIsEditing(true);
     }
@@ -180,28 +236,80 @@ const Invoices = () => {
         invoiceNumber: editFormData.invoiceNumber,
         date: editFormData.date.toISOString(),
         items: editFormData.items,
-        subtotal: editFormData.items.reduce((sum, item) => sum + (item.total || 0), 0),
-        total: editFormData.items.reduce((sum, item) => sum + (item.total || 0), 0),
+        subtotal: editFormData.items.reduce(
+          (sum, item) => sum + (item.total || 0),
+          0
+        ),
+        total: editFormData.items.reduce(
+          (sum, item) => sum + (item.total || 0),
+          0
+        ),
         vehicleNumber: editFormData.vehicleNumber,
       };
 
-      const result = await window.electronAPI.updateInvoice(selectedInvoice.id, invoiceData);
+      const result = await window.electronAPI.updateInvoice(
+        selectedInvoice.id,
+        invoiceData
+      );
       if (result.success) {
         loadInvoices();
-        const updatedResult = await window.electronAPI.getInvoice(selectedInvoice.id);
+        const updatedResult = await window.electronAPI.getInvoice(
+          selectedInvoice.id
+        );
         if (updatedResult.success) {
           setSelectedInvoice(updatedResult.data);
         }
         setIsEditing(false);
         setEditFormData(null);
-        alert("Invoice updated successfully");
+        setInfoModal({
+          isOpen: true,
+          type: "success",
+          message: "Invoice updated successfully",
+        });
       } else {
-        alert(result.error || "Failed to update invoice");
+        setInfoModal({
+          isOpen: true,
+          type: "error",
+          message: result.error || "Failed to update invoice",
+        });
       }
     } catch (error) {
       console.error("Error updating invoice:", error);
-      alert("Error updating invoice");
+      setInfoModal({
+        isOpen: true,
+        type: "error",
+        message: "Error updating invoice",
+      });
     }
+  };
+
+  const handleItemNameChange = async (itemIndex, newName) => {
+    if (!editFormData) return;
+
+    const newItems = [...editFormData.items];
+    newItems[itemIndex].name = newName;
+    newItems[itemIndex].description = newName;
+
+    // Fetch existing item's price if it exists
+    try {
+      const itemResult = await window.electronAPI.getItemByName(newName);
+      if (itemResult.success && itemResult.data) {
+        // Use existing item's price
+        const existingPrice =
+          itemResult.data.price || itemResult.data.cost || 0;
+        newItems[itemIndex].rate = existingPrice;
+        newItems[itemIndex].unitPrice = existingPrice;
+        newItems[itemIndex].total =
+          newItems[itemIndex].quantity * existingPrice;
+      }
+    } catch (error) {
+      console.error("Error fetching item:", error);
+    }
+
+    setEditFormData({
+      ...editFormData,
+      items: newItems,
+    });
   };
 
   const handlePrintInvoice = async () => {
@@ -242,13 +350,13 @@ const Invoices = () => {
 
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
+      doc.text(`Invoice #: ${selectedInvoice.invoiceNumber}`, 14, 55);
       doc.text(
-        `Invoice #: ${selectedInvoice.invoiceNumber}`,
-        14,
-        55
-      );
-      doc.text(
-        `Date: ${selectedInvoice.date ? new Date(selectedInvoice.date).toLocaleDateString() : "-"}`,
+        `Date: ${
+          selectedInvoice.date
+            ? new Date(selectedInvoice.date).toLocaleDateString()
+            : "-"
+        }`,
         14,
         62
       );
@@ -261,12 +369,13 @@ const Invoices = () => {
       }
 
       // Prepare table data
-      const tableData = selectedInvoice.items?.map((item) => [
-        item.name || item.description || "-",
-        item.quantity || 0,
-        `UGX ${(item.rate || item.unitPrice || 0).toLocaleString()}`,
-        `UGX ${(item.total || 0).toLocaleString()}`,
-      ]) || [];
+      const tableData =
+        selectedInvoice.items?.map((item) => [
+          item.name || item.description || "-",
+          item.quantity || 0,
+          `UGX ${(item.rate || item.unitPrice || 0).toLocaleString()}`,
+          `UGX ${(item.total || 0).toLocaleString()}`,
+        ]) || [];
 
       // Add table
       autoTable.default(doc, {
@@ -314,7 +423,11 @@ const Invoices = () => {
           </html>
         `);
       } else {
-        doc.save(`invoice-${selectedInvoice.invoiceNumber}-${new Date().toISOString().split("T")[0]}.pdf`);
+        doc.save(
+          `invoice-${selectedInvoice.invoiceNumber}-${
+            new Date().toISOString().split("T")[0]
+          }.pdf`
+        );
       }
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -330,25 +443,39 @@ const Invoices = () => {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
 
-      // Header
+      // Load and add logo on the left
+      try {
+        const img = new Image();
+        img.src = logoImage;
+        await new Promise((resolve) => {
+          img.onload = () => {
+            const logoWidth = 30;
+            const logoHeight = (img.height / img.width) * logoWidth;
+            doc.addImage(img, "PNG", 14, 10, logoWidth, logoHeight);
+            resolve();
+          };
+          img.onerror = resolve; // Continue even if image fails to load
+        });
+      } catch (error) {
+        console.error("Error loading logo:", error);
+      }
+
+      // Header text (on the right of logo)
       doc.setFontSize(20);
       doc.setTextColor(27, 101, 246); // Primary color #1b65f6
-      doc.text("WilsonPlus", pageWidth / 2, 20, { align: "center" });
+      doc.text("WilsonPlus", 50, 25, { align: "left" });
 
       doc.setFontSize(16);
       doc.setTextColor(0, 0, 0);
-      doc.text("Purchase Invoices Report", pageWidth / 2, 35, {
-        align: "center",
+      doc.text("Purchase Invoices Report", 50, 40, {
+        align: "left",
       });
 
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
-      doc.text(
-        `Generated on: ${new Date().toLocaleDateString()}`,
-        14,
-        55,
-        { align: "left" }
-      );
+      doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 55, {
+        align: "left",
+      });
 
       if (dateFrom && dateTo) {
         doc.text(
@@ -595,14 +722,14 @@ const Invoices = () => {
                   <>
                     <button
                       onClick={handleEditClick}
-                      className="p-2 text-white transition-colors bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30"
+                      className="p-2 text-white transition-colors bg-white rounded-lg bg-opacity-20 hover:bg-opacity-30"
                       title="Edit Invoice"
                     >
                       <Edit className="w-5 h-5" />
                     </button>
                     <button
                       onClick={() => handleDeleteClick(selectedInvoice.id)}
-                      className="p-2 text-white transition-colors bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30"
+                      className="p-2 text-white transition-colors bg-white rounded-lg bg-opacity-20 hover:bg-opacity-30"
                       title="Delete Invoice"
                     >
                       <Trash2 className="w-5 h-5" />
@@ -611,7 +738,7 @@ const Invoices = () => {
                 )}
                 <button
                   onClick={handlePrintInvoice}
-                  className="p-2 text-white transition-colors bg-white bg-opacity-20 rounded-lg hover:bg-opacity-30"
+                  className="p-2 text-white transition-colors bg-white rounded-lg bg-opacity-20 hover:bg-opacity-30"
                   title="Print Invoice"
                 >
                   <Printer className="w-5 h-5" />
@@ -693,19 +820,20 @@ const Invoices = () => {
                               <label className="block mb-1 text-xs text-gray-600">
                                 Item Name
                               </label>
-                              <input
-                                type="text"
+                              <ItemNameDropdown
+                                options={itemNames}
                                 value={item.name}
-                                onChange={(e) => {
-                                  const newItems = [...editFormData.items];
-                                  newItems[index].name = e.target.value;
-                                  newItems[index].description = e.target.value;
-                                  setEditFormData({
-                                    ...editFormData,
-                                    items: newItems,
-                                  });
+                                onChange={(value) =>
+                                  handleItemNameChange(index, value)
+                                }
+                                onAddNew={(newName) => {
+                                  if (newName && !itemNames.includes(newName)) {
+                                    setItemNames(
+                                      [...itemNames, newName].sort()
+                                    );
+                                  }
                                 }}
-                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
+                                placeholder="Select or type item name"
                               />
                             </div>
                             <div>
@@ -717,9 +845,8 @@ const Invoices = () => {
                                 value={item.quantity}
                                 onChange={(e) => {
                                   const newItems = [...editFormData.items];
-                                  newItems[index].quantity = parseFloat(
-                                    e.target.value
-                                  ) || 0;
+                                  newItems[index].quantity =
+                                    parseFloat(e.target.value) || 0;
                                   newItems[index].total =
                                     newItems[index].quantity *
                                     (newItems[index].rate || 0);
@@ -740,9 +867,8 @@ const Invoices = () => {
                                 value={item.rate}
                                 onChange={(e) => {
                                   const newItems = [...editFormData.items];
-                                  newItems[index].rate = parseFloat(
-                                    e.target.value
-                                  ) || 0;
+                                  newItems[index].rate =
+                                    parseFloat(e.target.value) || 0;
                                   newItems[index].unitPrice =
                                     newItems[index].rate;
                                   newItems[index].total =
@@ -846,9 +972,9 @@ const Invoices = () => {
                       </div>
                     )}
                   {!canEditInvoice && (
-                    <div className="p-3 text-sm text-amber-600 bg-amber-50 rounded-lg">
-                      This invoice cannot be edited or deleted because some batches
-                      from this invoice have been sold.
+                    <div className="p-3 text-sm rounded-lg text-amber-600 bg-amber-50">
+                      This invoice cannot be edited or deleted because some
+                      batches from this invoice have been sold.
                     </div>
                   )}
                   <div>
@@ -889,6 +1015,23 @@ const Invoices = () => {
         message="Are you sure you want to delete this invoice? This will remove all inventory batches associated with this invoice and revert stock changes. This action cannot be undone."
         confirmText="Delete"
         cancelText="Cancel"
+      />
+
+      <Modal
+        isOpen={infoModal.isOpen}
+        onClose={() =>
+          setInfoModal({ isOpen: false, type: "info", message: "" })
+        }
+        type={infoModal.type === "error" ? "error" : "info"}
+        title={
+          infoModal.type === "error"
+            ? "Error"
+            : infoModal.type === "success"
+            ? "Success"
+            : "Information"
+        }
+        message={infoModal.message}
+        confirmText="OK"
       />
     </div>
   );

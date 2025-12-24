@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   updateItem: (id, itemData) => ipcRenderer.invoke("db-updateItem", id, itemData),
   deleteItem: (id) => ipcRenderer.invoke("db-deleteItem", id),
   getItem: (id) => ipcRenderer.invoke("db-getItem", id),
+  getItemByName: (name) => ipcRenderer.invoke("db-getItemByName", name),
   getAllItems: () => ipcRenderer.invoke("db-getAllItems"),
   searchItems: (query) => ipcRenderer.invoke("db-searchItems", query),
   getUniqueItemNames: () => ipcRenderer.invoke("db-getUniqueItemNames"),

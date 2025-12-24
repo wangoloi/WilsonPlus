@@ -45,16 +45,21 @@ class ItemService {
     return await this.itemRepository.getUniqueNames();
   }
 
-  async createOrUpdateItemByName(itemData) {
+  async createOrUpdateItemByName(itemData, updatePrice = false) {
     const existingItem = await this.itemRepository.findByName(itemData.name);
     if (existingItem) {
-      // Update existing item: add to stock, update price to latest
+      // Update existing item: add to stock
       const newStock = (existingItem.stock || 0) + (itemData.stock || 0);
+      
+      // If updatePrice is true, use the new price from itemData, otherwise keep existing price
+      const newPrice = updatePrice ? (itemData.price || existingItem.price || 0) : (existingItem.price || itemData.price || 0);
+      const newCost = updatePrice ? (itemData.cost || existingItem.cost || 0) : (existingItem.cost || itemData.cost || 0);
+      
       await this.itemRepository.update(existingItem.id, {
         ...existingItem,
         stock: newStock,
-        price: itemData.price || existingItem.price,
-        cost: itemData.cost || existingItem.cost,
+        price: newPrice,
+        cost: newCost,
         category: itemData.category || existingItem.category,
         quality: itemData.quality || existingItem.quality,
         invoiceNumber: itemData.invoiceNumber || existingItem.invoiceNumber,

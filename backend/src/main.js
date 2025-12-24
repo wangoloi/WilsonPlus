@@ -180,6 +180,16 @@ function setupIPCHandlers() {
     }
   });
 
+  ipcMain.handle("db-getItemByName", async (event, name) => {
+    try {
+      const item = await itemService.getItemByName(name);
+      return { success: true, data: item };
+    } catch (error) {
+      console.error("Error getting item by name:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
   ipcMain.handle("db-getAllItems", async () => {
     try {
       const items = await itemService.getAllItems();
@@ -269,7 +279,7 @@ function setupIPCHandlers() {
       // AND create purchase records for tracking individual purchases
       if (invoiceData.items && Array.isArray(invoiceData.items)) {
         for (const item of invoiceData.items) {
-          // Update inventory
+          // Update inventory - use latest rate to update the item's price
           await itemService.createOrUpdateItemByName({
             name: item.name || item.description,
             category: item.category,
@@ -280,7 +290,7 @@ function setupIPCHandlers() {
             invoiceNumber: invoiceData.invoiceNumber,
             vehicleNumber: invoiceData.vehicleNumber,
             minStock: 0,
-          });
+          }, true); // Pass true to update price with latest rate
 
           // Get the item ID after creating/updating
           const actualItem = await itemService.getItemByName(
@@ -406,37 +416,41 @@ function setupIPCHandlers() {
       // Create new batches and update items
       if (invoiceData.items && Array.isArray(invoiceData.items)) {
         for (const item of invoiceData.items) {
-          // Update inventory
+          const itemName = item.name || item.description;
+          const itemQuantity = item.quantity || 0;
+          
+          // Use form rate as the price - respect user input when they change the rate
+          const itemPrice = item.rate || item.unitPrice || 0;
+          const itemCost = item.rate || item.unitPrice || 0;
+
+          // Update inventory - this will add stock to existing item or create new
+          // When updating, use the form rate to update the item's price
           await itemService.createOrUpdateItemByName({
-            name: item.name || item.description,
+            name: itemName,
             category: item.category,
-            stock: item.quantity || 0,
-            price: item.rate || item.unitPrice || 0,
-            cost: item.rate || item.unitPrice || 0,
+            stock: itemQuantity,
+            price: itemPrice,
+            cost: itemCost,
             quality: item.quality,
             invoiceNumber: invoiceData.invoiceNumber,
             vehicleNumber: invoiceData.vehicleNumber,
             minStock: 0,
-          });
+          }, true); // Pass true to indicate we should update the price
 
           // Get the item ID after creating/updating
-          const actualItem = await itemService.getItemByName(
-            item.name || item.description
-          );
+          const actualItem = await itemService.getItemByName(itemName);
 
-          // Create inventory batch record
-          const itemQuantity = item.quantity || 0;
+          // Create inventory batch record with the correct price
           await inventoryBatchRepository.create({
             itemId: actualItem ? actualItem.id : null,
             invoiceId: id,
             invoiceNumber: invoiceData.invoiceNumber,
-            itemName: item.name || item.description,
+            itemName: itemName,
             category: item.category,
             quantity: itemQuantity,
             availableQuantity: itemQuantity,
-            rate: item.rate || item.unitPrice || 0,
-            total:
-              item.total || itemQuantity * (item.rate || item.unitPrice || 0),
+            rate: itemPrice,
+            total: item.total || itemQuantity * itemPrice,
             quality: item.quality,
             vehicleNumber: invoiceData.vehicleNumber,
             purchaseDate: purchaseDate,
