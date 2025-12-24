@@ -159,6 +159,15 @@ class DatabaseSchema {
           `CREATE INDEX IF NOT EXISTS idx_inventory_batches_purchaseDate ON inventory_batches(purchaseDate)`
         );
 
+        // Quality names table
+        this.db.run(`
+          CREATE TABLE IF NOT EXISTS quality_names (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+          )
+        `);
+
         // Users table for authentication
         this.db.run(`
           CREATE TABLE IF NOT EXISTS users (

@@ -25,6 +25,10 @@ contextBridge.exposeInMainWorld("electronAPI", {
   searchItems: (query) => ipcRenderer.invoke("db-searchItems", query),
   getUniqueItemNames: () => ipcRenderer.invoke("db-getUniqueItemNames"),
   
+  // Quality Management
+  getAllQualities: () => ipcRenderer.invoke("db-getAllQualities"),
+  addQuality: (name) => ipcRenderer.invoke("db-addQuality", name),
+  
   // Invoice Management
   addInvoice: (invoiceData) => ipcRenderer.invoke("db-addInvoice", invoiceData),
   getAllInvoices: () => ipcRenderer.invoke("db-getAllInvoices"),

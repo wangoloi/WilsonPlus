@@ -25,10 +25,12 @@ const SalesTransactionRepository = require("./domains/sales/repositories/SalesTr
 const AlertRepository = require("./domains/alerts/repositories/AlertRepository");
 const InventoryBatchRepository = require("./domains/inventory_batches/repositories/InventoryBatchRepository");
 const UserRepository = require("./domains/users/repositories/UserRepository");
+const QualityRepository = require("./domains/quality/repositories/QualityRepository");
 
 // Import services
 const ItemService = require("./domains/items/services/ItemService");
 const UserService = require("./domains/users/services/UserService");
+const QualityService = require("./domains/quality/services/QualityService");
 
 // Removed: Old NyumbaTrack helper function (not needed for inventory management)
 
@@ -41,8 +43,9 @@ let itemRepository,
   salesTransactionRepository,
   alertRepository,
   inventoryBatchRepository,
-  userRepository;
-let itemService, userService;
+  userRepository,
+  qualityRepository;
+let itemService, userService, qualityService;
 
 // Window state management
 const windowStateFile = path.join(__dirname, "window-state.json");
@@ -107,12 +110,14 @@ async function initializeDatabase() {
     alertRepository = new AlertRepository(db);
     inventoryBatchRepository = new InventoryBatchRepository(db);
     userRepository = new UserRepository(db);
+    qualityRepository = new QualityRepository(db);
     console.log("🔧 All repositories initialized");
 
     // Initialize services
     console.log("🔧 Initializing services...");
     itemService = new ItemService(itemRepository, alertRepository);
     userService = new UserService(userRepository);
+    qualityService = new QualityService(qualityRepository);
     console.log("🔧 All services initialized");
 
     // Set up IPC handlers AFTER repositories are initialized
@@ -196,6 +201,27 @@ function setupIPCHandlers() {
       return { success: true, data: names };
     } catch (error) {
       console.error("Error getting unique item names:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  // Quality Management IPC handlers
+  ipcMain.handle("db-getAllQualities", async () => {
+    try {
+      const qualities = await qualityService.getAllQualities();
+      return { success: true, data: qualities };
+    } catch (error) {
+      console.error("Error getting all qualities:", error);
+      return { success: false, error: error.message };
+    }
+  });
+
+  ipcMain.handle("db-addQuality", async (event, name) => {
+    try {
+      const qualityId = await qualityService.addQuality(name);
+      return { success: true, data: { id: qualityId } };
+    } catch (error) {
+      console.error("Error adding quality:", error);
       return { success: false, error: error.message };
     }
   });

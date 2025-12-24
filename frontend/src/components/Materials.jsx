@@ -4,11 +4,13 @@ import Modal from "../shared/Modal";
 import CustomDatePicker from "../shared/CustomDatepicker";
 import Dropdown from "../shared/Dropdown";
 import ItemNameDropdown from "../shared/ItemNameDropdown";
+import QualityDropdown from "../shared/QualityDropdown";
 import DataTable from "../shared/DataTable";
 
 const Materials = () => {
   const [items, setItems] = useState([]);
   const [itemNames, setItemNames] = useState([]);
+  const [qualityNames, setQualityNames] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -58,6 +60,7 @@ const Materials = () => {
   useEffect(() => {
     loadInventory();
     loadItemNames();
+    loadQualities();
   }, [currentPage, itemsPerPage]);
 
   // Auto-search with debounce
@@ -92,6 +95,17 @@ const Materials = () => {
       }
     } catch (error) {
       console.error("Error loading item names:", error);
+    }
+  };
+
+  const loadQualities = async () => {
+    try {
+      const result = await window.electronAPI.getAllQualities();
+      if (result.success) {
+        setQualityNames(result.data || []);
+      }
+    } catch (error) {
+      console.error("Error loading qualities:", error);
     }
   };
 
