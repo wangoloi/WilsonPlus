@@ -116,12 +116,38 @@ const SaleModal = ({ onClose }) => {
     }
   };
 
+  // Calculate how much quantity is already in cart for each batch
+  const getQuantityInCartForBatch = (batchId) => {
+    return saleItems
+      .filter((item) => item.batchId === batchId)
+      .reduce((sum, item) => sum + item.quantity, 0);
+  };
+
+  // Calculate adjusted available quantity (original - quantity in cart)
+  const getAdjustedAvailableQuantity = (batch) => {
+    const quantityInCart = getQuantityInCartForBatch(batch.id);
+    // If editing, exclude the current item being edited
+    if (
+      editingIndex !== null &&
+      saleItems[editingIndex]?.batchId === batch.id
+    ) {
+      const currentItemQuantity = saleItems[editingIndex].quantity;
+      return batch.availableQuantity - quantityInCart + currentItemQuantity;
+    }
+    return batch.availableQuantity - quantityInCart;
+  };
+
   const selectedItemData = items.find(
     (item) => item.id === parseInt(selectedItemId)
   );
   const selectedBatchData = availableBatches.find(
     (batch) => batch.id === parseInt(selectedBatch)
   );
+
+  // Get adjusted available quantity for selected batch
+  const selectedBatchAdjustedAvailable = selectedBatchData
+    ? getAdjustedAvailableQuantity(selectedBatchData)
+    : 0;
 
   const showAlert = (type, title, message) => {
     setAlertModal({ isOpen: true, type, title, message });
@@ -144,10 +170,14 @@ const SaleModal = ({ onClose }) => {
 
     // Calculate adjusted available quantity (accounting for items already in cart)
     const quantityInCart = getQuantityInCartForBatch(selectedBatchData.id);
-    let adjustedAvailable = selectedBatchData.availableQuantity - quantityInCart;
-    
+    let adjustedAvailable =
+      selectedBatchData.availableQuantity - quantityInCart;
+
     // If editing, exclude the current item being edited from the calculation
-    if (editingIndex !== null && saleItems[editingIndex]?.batchId === selectedBatchData.id) {
+    if (
+      editingIndex !== null &&
+      saleItems[editingIndex]?.batchId === selectedBatchData.id
+    ) {
       adjustedAvailable += saleItems[editingIndex].quantity;
     }
 
@@ -343,31 +373,13 @@ const SaleModal = ({ onClose }) => {
     })),
   ];
 
-  // Calculate how much quantity is already in cart for each batch
-  const getQuantityInCartForBatch = (batchId) => {
-    return saleItems
-      .filter((item) => item.batchId === batchId)
-      .reduce((sum, item) => sum + item.quantity, 0);
-  };
-
-  // Calculate adjusted available quantity (original - quantity in cart)
-  const getAdjustedAvailableQuantity = (batch) => {
-    const quantityInCart = getQuantityInCartForBatch(batch.id);
-    // If editing, exclude the current item being edited
-    if (editingIndex !== null && saleItems[editingIndex]?.batchId === batch.id) {
-      const currentItemQuantity = saleItems[editingIndex].quantity;
-      return batch.availableQuantity - quantityInCart + currentItemQuantity;
-    }
-    return batch.availableQuantity - quantityInCart;
-  };
-
   const batchDropdownOptions = [
     { value: "", label: "Select a batch" },
     ...availableBatches.map((batch) => {
       const adjustedAvailable = getAdjustedAvailableQuantity(batch);
       return {
         value: batch.id.toString(),
-        label: `Date: ${new Date(
+        label: `${new Date(
           batch.purchaseDate
         ).toLocaleDateString()} - Available: ${adjustedAvailable} - Rate: UGX ${batch.rate?.toLocaleString()}`,
       };
@@ -528,13 +540,13 @@ const SaleModal = ({ onClose }) => {
                           required
                           // min="0.1"
                           // step="0.1"
-                          max={selectedBatchData.availableQuantity}
+                          max={selectedBatchAdjustedAvailable}
                           value={quantity}
                           onChange={(e) => setQuantity(e.target.value)}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#1b65f6]"
                         />
                         <p className="mt-1 text-xs text-gray-500">
-                          Available: {selectedBatchData.availableQuantity}
+                          Available: {selectedBatchAdjustedAvailable}
                         </p>
                       </div>
 

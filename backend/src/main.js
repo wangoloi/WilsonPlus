@@ -212,13 +212,13 @@ function setupIPCHandlers() {
 
   // Quality Management IPC handlers
   ipcMain.handle("db-getAllQualities", async () => {
-    try {
+      try {
       const qualities = await qualityService.getAllQualities();
       return { success: true, data: qualities };
-    } catch (error) {
+      } catch (error) {
       console.error("Error getting all qualities:", error);
-      return { success: false, error: error.message };
-    }
+        return { success: false, error: error.message };
+      }
   });
 
   ipcMain.handle("db-addQuality", async (event, name) => {
@@ -233,13 +233,13 @@ function setupIPCHandlers() {
 
   // Customer Management IPC handlers
   ipcMain.handle("db-getAllCustomers", async () => {
-    try {
+      try {
       const customers = await customerService.getAllCustomers();
       return { success: true, data: customers };
-    } catch (error) {
+      } catch (error) {
       console.error("Error getting all customers:", error);
-      return { success: false, error: error.message };
-    }
+        return { success: false, error: error.message };
+      }
   });
 
   ipcMain.handle("db-addCustomer", async (event, name) => {
@@ -345,7 +345,7 @@ function setupIPCHandlers() {
       const batches = await inventoryBatchRepository.findByInvoiceId(id);
       if (!batches || batches.length === 0) {
         return { success: true, canEdit: true };
-      }
+    }
 
       const batchIds = batches.map((b) => b.id);
       const hasSales = await saleRepository.hasSalesForBatches(batchIds);
@@ -365,11 +365,11 @@ function setupIPCHandlers() {
         const batchIds = batches.map((b) => b.id);
         const hasSales = await saleRepository.hasSalesForBatches(batchIds);
         if (hasSales) {
-          return {
-            success: false,
+      return {
+        success: false,
             error: "Cannot edit invoice: Some batches from this invoice have been sold",
-          };
-        }
+      };
+    }
       }
 
       // Get old invoice data to calculate stock changes
@@ -451,19 +451,19 @@ function setupIPCHandlers() {
   });
 
   ipcMain.handle("db-deleteInvoice", async (event, id) => {
-    try {
+      try {
       // Check if invoice can be deleted
       const batches = await inventoryBatchRepository.findByInvoiceId(id);
       if (batches && batches.length > 0) {
         const batchIds = batches.map((b) => b.id);
         const hasSales = await saleRepository.hasSalesForBatches(batchIds);
         if (hasSales) {
-          return {
-            success: false,
+        return {
+          success: false,
             error: "Cannot delete invoice: Some batches from this invoice have been sold",
-          };
-        }
+        };
       }
+    }
 
       // Revert inventory changes before deleting
       if (batches && batches.length > 0) {
@@ -587,18 +587,18 @@ function setupIPCHandlers() {
           }
         }
 
-        return {
-          success: true,
+      return {
+        success: true,
           data: {
             transactionId,
             transactionNumber,
             saleCount: saleResults.length,
           },
-        };
-      } catch (error) {
+      };
+    } catch (error) {
         console.error("Error adding sales transaction:", error);
         return { success: false, error: error.message };
-      }
+    }
     }
   );
 
@@ -629,7 +629,7 @@ function setupIPCHandlers() {
         }
 
         const sales = await saleRepository.findByTransactionId(transactionId);
-        
+
         // Enrich sales with batch information for profit calculation
         const enrichedSales = await Promise.all(
           sales.map(async (sale) => {
@@ -779,13 +779,13 @@ function setupIPCHandlers() {
   });
 
   ipcMain.handle("db-getUnreadAlerts", async () => {
-    try {
+      try {
       const alerts = await alertRepository.findUnread();
       return { success: true, data: alerts };
-    } catch (error) {
+      } catch (error) {
       console.error("Error getting unread alerts:", error);
       return { success: false, error: error.message };
-    }
+      }
   });
 
   ipcMain.handle("db-markAlertAsRead", async (event, alertId) => {
@@ -874,14 +874,14 @@ function setupIPCHandlers() {
   });
 
   ipcMain.handle("write-file", async (event, filePath, data) => {
-    try {
+      try {
       const fs = require("fs");
       fs.writeFileSync(filePath, data);
       return { success: true };
-    } catch (error) {
+      } catch (error) {
       console.error("Error writing file:", error);
       return { success: false, error: error.message };
-    }
+      }
   });
 
   ipcMain.handle("read-file", async (event, filePath) => {
@@ -908,7 +908,7 @@ function setupIPCHandlers() {
           password: hashedPassword,
           role: "admin",
         });
-        console.log(
+          console.log(
           "✅ Default admin user created (username: admin, password: admin)"
         );
       }
@@ -931,16 +931,16 @@ function setupIPCHandlers() {
   ipcMain.handle(
     "change-password",
     async (event, userId, currentPassword, newPassword) => {
-      try {
+    try {
         return await userService.changePassword(
           userId,
           currentPassword,
           newPassword
         );
-      } catch (error) {
+    } catch (error) {
         console.error("Error changing password:", error);
         return { success: false, error: error.message };
-      }
+    }
     }
   );
 
@@ -990,7 +990,7 @@ const getDatabasePath = () => {
         "data",
         "wilsonplus.db"
       );
-    } else {
+  } else {
       // Default - database is in app.asar/backend/data
       return path.join(
         process.resourcesPath,

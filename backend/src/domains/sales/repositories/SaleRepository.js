@@ -93,17 +93,13 @@ class SaleRepository {
 
   async delete(id) {
     return new Promise((resolve, reject) => {
-      this.db.run(
-        "DELETE FROM sales WHERE id = ?",
-        [id],
-        function (err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(this.changes > 0);
-          }
+      this.db.run("DELETE FROM sales WHERE id = ?", [id], function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(this.changes > 0);
         }
-      );
+      });
     });
   }
 
@@ -113,10 +109,10 @@ class SaleRepository {
         resolve(false);
         return;
       }
-      
+
       const placeholders = batchIds.map(() => "?").join(",");
       const sql = `SELECT COUNT(*) as count FROM sales WHERE batchId IN (${placeholders})`;
-      
+
       this.db.get(sql, batchIds, (err, row) => {
         if (err) {
           reject(err);
@@ -129,4 +125,3 @@ class SaleRepository {
 }
 
 module.exports = SaleRepository;
-
